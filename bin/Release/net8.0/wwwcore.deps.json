@@ -6,7 +6,7 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v8.0": {
-      "wwwcore/1.0.6": {
+      "wwwcore/1.0.7": {
         "dependencies": {
           "Microsoft.AspNetCore.Http": "2.2.2"
         },
@@ -125,7 +125,7 @@
     }
   },
   "libraries": {
-    "wwwcore/1.0.6": {
+    "wwwcore/1.0.7": {
       "type": "project",
       "serviceable": false,
       "sha512": ""
