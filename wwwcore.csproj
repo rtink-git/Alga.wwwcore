@@ -5,10 +5,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Alga.wwwcore</PackageId>
-    <Version>1.0.5</Version>
+    <Version>1.0.6</Version>
     <Author>rtink-git</Author>
     <Product>wwwcore</Product>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <repository>
+      <url>https://github.com/rtink-git/Alga.wwwcore</url>
+      <type>git</type>
+    </repository>
   </PropertyGroup>
 
   <ItemGroup>
