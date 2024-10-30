@@ -2,19 +2,37 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
+using System.IO;
 
 namespace Alga.wwwcore;
 
 public class ActivitiesBase
 {
-    protected string Wwwroot_Activities_Components;
-    protected string Wwwroot_Activities_ExternalComponents;
-    protected string Wwwroot_Activities_UIRs;
+    List<Url> _Urls { get; }
 
-    public ActivitiesBase() {
-        this.Wwwroot_Activities_Components = "/Activities/Components";
-        this.Wwwroot_Activities_ExternalComponents = "/Activities/ExternalComponents";
-        this.Wwwroot_Activities_UIRs = "/Activities/UIRs";
+    protected string? Wwwroot_Activities_Components;
+    protected string? Wwwroot_Activities_ExternalComponents;
+    protected string? Wwwroot_Activities_UIRs;
+
+    public ActivitiesBase(List<Url> urls) {
+        this._Urls = urls;
+
+        // -- File Syste: Check and adding default directories in the wwwroot
+
+        string? webRootPath = null;
+        foreach(var i in this._Urls)
+        if(i.urlType == UrlTypes.WebRoot) webRootPath = i.url;
+        if(webRootPath != null) {
+            var ActivitiesURP = "/Activities";
+            var Wwwroot_Activities = webRootPath + ActivitiesURP;
+            if (!Directory.Exists(Wwwroot_Activities)) Directory.CreateDirectory(Wwwroot_Activities);
+            this.Wwwroot_Activities_Components = ActivitiesURP + "/Components";
+            if (!Directory.Exists(Wwwroot_Activities_Components)) Directory.CreateDirectory(Wwwroot_Activities + Wwwroot_Activities_Components);
+            this.Wwwroot_Activities_ExternalComponents = ActivitiesURP + "/ExternalComponents";
+            if (!Directory.Exists(Wwwroot_Activities_ExternalComponents)) Directory.CreateDirectory(Wwwroot_Activities + Wwwroot_Activities_ExternalComponents);
+            this.Wwwroot_Activities_UIRs = ActivitiesURP + "/UIRs";
+            if (!Directory.Exists(Wwwroot_Activities_UIRs)) Directory.CreateDirectory(Wwwroot_Activities + Wwwroot_Activities_UIRs);
+        }
     }
 
     // -- Response to the client
@@ -76,15 +94,19 @@ public class ActivitiesBase
 
     string PageHeadPreconect() {
         var html = "";
-        //html += "<link rel=\"preconnect\" href=\"" + RtInk.Constants.url_api + "\" />";
-        html += "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\" />";
-        html += "<link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin />";
+        foreach(var i in this._Urls) if(i.urlType == UrlTypes.Preconnect) html += PreconnectLink(i.url);
+        var hasGFonts = false;
+        foreach(var i in this._Urls) if(i.urlType == UrlTypes.GoogleFont) { hasGFonts = true; break;}
+        if(hasGFonts) {
+            html += PreconnectLink("https://fonts.googleapis.com");
+            html += PreconnectLink("https://fonts.gstatic.com", true);
+        }
         return html;
     }
 
     string PageHeadLinks() {
         var html = "";
-        html += "<link href=\"https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap\" rel=\"stylesheet\">";
+        foreach(var i in this._Urls) if(i.urlType == UrlTypes.GoogleFont) html += "<link href=\"" + i.url + "\" rel=\"stylesheet\">";
         return html;
     }
 
@@ -103,10 +125,16 @@ public class ActivitiesBase
 
     string PageHeadAsyncScriptsAndAnalitys() {
         var html = "";
+        
         // Google analytics
-        html += "<script async src=\"https://www.googletagmanager.com/gtag/js?id=G-3JWL2CTE3M\"></script>";
-        // Google analytics - script
-        html += "<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', 'G-3JWL2CTE3M');</script>";
+        
+        string? googleAnalyticsCode = null;
+        foreach(var i in this._Urls) if(i.urlType == UrlTypes.GoogleAnalyticsCode) googleAnalyticsCode = i.url;
+            if(googleAnalyticsCode != null) {
+            html += "<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + googleAnalyticsCode + "\"></script>";
+            // Google analytics - script
+            html += "<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '" + googleAnalyticsCode + "');</script>";
+        }
         return html;
     }
 
@@ -119,23 +147,33 @@ public class ActivitiesBase
     string PageBodyDownScripts() {
         var html = "";
         html += "<script src=\"/app.js\" type=\"text/javascript\" async></script>";
+        
         // Yandex metrika
-        html += "<script async src=\"https://mc.yandex.ru/metrika/tag.js\"></script>";
-        html += "<script type=\"text/javascript\">(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }} k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window, document, \"script\", \"https://mc.yandex.ru/metrika/tag.js\", \"ym\");ym(97622081, \"init\", { clickmap:true,trackLinks:true,accurateTrackBounce:true });</script>";
-        html += "<noscript><div><img src=\"https://mc.yandex.ru/watch/97622081\" style=\"position:absolute; left:-9999px;\" alt=\"\" /></div></noscript>";
+
+        string? yandexMetrikaCode = null;
+        foreach(var i in this._Urls) if(i.urlType == UrlTypes.YandexMetrikaCode) yandexMetrikaCode = i.url;
+        if(yandexMetrikaCode != null) {
+            html += "<script async src=\"https://mc.yandex.ru/metrika/tag.js\"></script>";
+            html += "<script type=\"text/javascript\">(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }} k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window, document, \"script\", \"https://mc.yandex.ru/metrika/tag.js\", \"ym\");ym(" + yandexMetrikaCode + ", \"init\", { clickmap:true,trackLinks:true,accurateTrackBounce:true });</script>";
+            html += "<noscript><div><img src=\"https://mc.yandex.ru/watch/" + yandexMetrikaCode + "\" style=\"position:absolute; left:-9999px;\" alt=\"\" /></div></noscript>";
+        }
         return html;      
     }
 
     string IconLink(int size) => "<link rel=\"icon\" type=\"image/png\" rel=\"noopener\" target=\"_blank\" sizes=\"" + size + "x" + size + "\" href=\"" + this.Wwwroot_Activities_Components + "/HeadHtmlBox/content/logo512.png\">";
+    string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + ((isCrossorigin) ? "crossorigin" : "") + " />";
 
     // -- Models
 
     public enum FilesTypes { JsAndCss, JsOnly, CssOnly }
     public enum ComponentTypes { PageComponent, Page, ExternalComponent }
+    public enum UrlTypes { WebRoot, GoogleFont, Preconnect, GoogleAnalyticsCode, YandexMetrikaCode }
     public record UrlModel(MethodBase? methodBase, FilesTypes filesType = FilesTypes.JsAndCss, ComponentTypes componentType = ComponentTypes.PageComponent);
+    public record Url (UrlTypes urlType, string url);
 
     // -- BundlerMinifier
     // -- nuget: https://www.nuget.org/packages/BundlerMinifier.Core
+    // -- nuget: https://www.nuget.org/packages/BuildBundlerMinifier
 
     public void BundleconfigJsonRebuild(List<List<UrlModel>> l)
     {

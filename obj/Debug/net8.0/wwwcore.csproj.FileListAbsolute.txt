@@ -1,0 +1,13 @@
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/bin/Debug/net8.0/wwwcore.deps.json
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/bin/Debug/net8.0/wwwcore.dll
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/bin/Debug/net8.0/wwwcore.pdb
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.csproj.AssemblyReference.cache
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.GeneratedMSBuildEditorConfig.editorconfig
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.AssemblyInfoInputs.cache
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.AssemblyInfo.cs
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.csproj.CoreCompileInputs.cache
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.sourcelink.json
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.dll
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/refint/wwwcore.dll
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/wwwcore.pdb
+/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Debug/net8.0/ref/wwwcore.dll
