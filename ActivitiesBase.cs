@@ -2,19 +2,19 @@
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
-using System.IO;
 
 namespace Alga.wwwcore;
 
 public class ActivitiesBase
 {
+    bool _IsDebug { get; }
     List<Url> _Urls { get; }
 
     protected string? Wwwroot_Activities_Components;
     protected string? Wwwroot_Activities_ExternalComponents;
     protected string? Wwwroot_Activities_UIRs;
 
-    public ActivitiesBase(List<Url> urls) {
+    public ActivitiesBase(bool IsDebug, List<Url> urls) {
         this._Urls = urls;
 
         // -- File Syste: Check and adding default directories in the wwwroot
@@ -39,15 +39,13 @@ public class ActivitiesBase
 
     public async Task Response(HttpContext context, List<UrlModel> heads, string? seoTags = null, string? headsSub = null, int cacheControlInS = -1)
     {
-#if !DEBUG
-        var pageName = "";
-        foreach(var i in heads) 
-            if(i.componentType == ComponentTypes.Page) { pageName = i.methodBase.Name; break; }
-        await ResponseRelease(context, pageName, seoTags, headsSub, cacheControlInS);
-#endif
-#if DEBUG
-        await ResponseDebug(context, heads, seoTags, headsSub);
-#endif
+        if(!this._IsDebug) {
+            var pageName = "";
+            foreach(var i in heads)
+                if(i.componentType == ComponentTypes.Page && i.methodBase != null) { pageName = i.methodBase.Name; break; }
+            await ResponseRelease(context, pageName, seoTags, headsSub, cacheControlInS);
+        }
+        else await ResponseDebug(context, heads, seoTags, headsSub);
     }
 
     async Task ResponseDebug(HttpContext context, List<UrlModel> heads, string? seoTags, string? headsSub)
