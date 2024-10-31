@@ -7,31 +7,19 @@ namespace Alga.wwwcore;
 
 public class ActivitiesBase
 {
-    bool _IsDebug { get; }
-    List<Url> _Urls { get; }
-
-    protected string? Wwwroot_Activities_Components;
-    protected string? Wwwroot_Activities_ExternalComponents;
-    protected string? Wwwroot_Activities_UIRs;
-
-    public ActivitiesBase(bool IsDebug, List<Url> urls) {
-        this._Urls = urls;
+    public ActivitiesBase() {
 
         // -- File Syste: Check and adding default directories in the wwwroot
 
-        string? webRootPath = null;
-        foreach(var i in this._Urls)
-        if(i.urlType == UrlTypes.WebRoot) webRootPath = i.url;
-        if(webRootPath != null) {
-            var ActivitiesURP = "/Activities";
-            var Wwwroot_Activities = webRootPath + ActivitiesURP;
+        if(Config.WebRootUrl != null) {
+            var Wwwroot_Activities = Config.WebRootUrl + Config.WebRootUrlPart_Activities;
             if (!Directory.Exists(Wwwroot_Activities)) Directory.CreateDirectory(Wwwroot_Activities);
-            this.Wwwroot_Activities_Components = ActivitiesURP + "/Components";
-            if (!Directory.Exists(Wwwroot_Activities_Components)) Directory.CreateDirectory(Wwwroot_Activities + Wwwroot_Activities_Components);
-            this.Wwwroot_Activities_ExternalComponents = ActivitiesURP + "/ExternalComponents";
-            if (!Directory.Exists(Wwwroot_Activities_ExternalComponents)) Directory.CreateDirectory(Wwwroot_Activities + Wwwroot_Activities_ExternalComponents);
-            this.Wwwroot_Activities_UIRs = ActivitiesURP + "/UIRs";
-            if (!Directory.Exists(Wwwroot_Activities_UIRs)) Directory.CreateDirectory(Wwwroot_Activities + Wwwroot_Activities_UIRs);
+            var Wwwroot_Activities_Components = Config.WebRootUrl + Config.WebRootUrlPart_Activities_Components;
+            if (!Directory.Exists(Wwwroot_Activities_Components)) Directory.CreateDirectory(Wwwroot_Activities_Components);
+            var Wwwroot_Activities_ExternalComponents = Config.WebRootUrl + Config.WebRootUrlPart_Activities_ExternalComponents;
+            if (!Directory.Exists(Wwwroot_Activities_ExternalComponents)) Directory.CreateDirectory(Wwwroot_Activities_ExternalComponents);
+            var Wwwroot_Activities_UIRs = Config.WebRootUrl + Config.WebRootUrlPart_Activities_UIRs;
+            if (!Directory.Exists(Wwwroot_Activities_UIRs)) Directory.CreateDirectory(Wwwroot_Activities_UIRs);
         }
     }
 
@@ -39,7 +27,7 @@ public class ActivitiesBase
 
     public async Task Response(HttpContext context, List<UrlModel> heads, string? seoTags = null, string? headsSub = null, int cacheControlInS = -1)
     {
-        if(!this._IsDebug) {
+        if(!Config.IsDebug) {
             var pageName = "";
             foreach(var i in heads)
                 if(i.componentType == ComponentTypes.Page && i.methodBase != null) { pageName = i.methodBase.Name; break; }
@@ -53,7 +41,7 @@ public class ActivitiesBase
         var hd = "";
         foreach (var i in heads)
         {
-            var url = ((i.componentType == ComponentTypes.PageComponent) ? this.Wwwroot_Activities_Components : this.Wwwroot_Activities_UIRs) + "/" + ((i.methodBase != null) ? i.methodBase.Name : "");;
+            var url = ((i.componentType == ComponentTypes.PageComponent) ? Config.WebRootUrlPart_Activities_Components : Config.WebRootUrlPart_Activities_UIRs) + "/" + ((i.methodBase != null) ? i.methodBase.Name : "");;
 
             if (i.filesType == FilesTypes.JsAndCss || i.filesType == FilesTypes.CssOnly) hd += LinkHtml(url + "/style.css");
             if (i.filesType == FilesTypes.JsAndCss || i.filesType == FilesTypes.JsOnly) hd += ScriptHtml(url + "/script.js", i.componentType);
@@ -68,7 +56,7 @@ public class ActivitiesBase
         if (cacheControlInS > -1) context.Response.Headers[HeaderNames.CacheControl] = "public, max-age=" + cacheControlInS;
         context.Response.ContentType = "text/HTML";
 
-        var hd = LinkHtml(this.Wwwroot_Activities_UIRs + "/" + pageName + "/style.min.css") + ScriptHtml(this.Wwwroot_Activities_UIRs + "/" + pageName + "/script.min.js", ComponentTypes.Page);
+        var hd = LinkHtml(Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/style.min.css") + ScriptHtml(Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/script.min.js", ComponentTypes.Page);
         await ResponseBase(context, seoTags, headsSub + hd);
     }
 
@@ -92,10 +80,9 @@ public class ActivitiesBase
 
     string PageHeadPreconect() {
         var html = "";
-        foreach(var i in this._Urls) if(i.urlType == UrlTypes.Preconnect) html += PreconnectLink(i.url);
-        var hasGFonts = false;
-        foreach(var i in this._Urls) if(i.urlType == UrlTypes.GoogleFont) { hasGFonts = true; break;}
-        if(hasGFonts) {
+        if(Config.PreconnectUrls != null)
+            foreach(var i in Config.PreconnectUrls) html += PreconnectLink(i);
+        if(Config.GoogleFontsUrl != null) {
             html += PreconnectLink("https://fonts.googleapis.com");
             html += PreconnectLink("https://fonts.gstatic.com", true);
         }
@@ -104,18 +91,16 @@ public class ActivitiesBase
 
     string PageHeadLinks() {
         var html = "";
-        foreach(var i in this._Urls) if(i.urlType == UrlTypes.GoogleFont) html += "<link href=\"" + i.url + "\" rel=\"stylesheet\">";
+        if(Config.GoogleFontsUrl != null) html += "<link href=\"" + Config.GoogleFontsUrl + "\" rel=\"stylesheet\">";
         return html;
     }
 
     string PageHeadIconsAndManifest() {
         var html = "";
-        var url = this.Wwwroot_Activities_Components + "/HeadHtmlBox/content";
-        html += "<link rel=\"apple-touch-icon\" href=\"" + url + "/logo180.png\">";
-        html += IconLink(32);
-        html += IconLink(144);
-        html += IconLink(192);
-        html += IconLink(512);
+        if(Config.Icon180Url != null) html += "<link rel=\"apple-touch-icon\" href=\"" + Config.Icon180Url + "/logo180.png\">";
+        if(Config.Icon32Url != null) html += "<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"" + Config.Icon32Url + "\">";
+        if(Config.Icon192Url != null) html += "<link rel=\"icon\" type=\"image/png\" sizes=\"192x192\" href=\"" + Config.Icon192Url + "\">";
+        if(Config.Icon512Url != null) html += "<link rel=\"icon\" type=\"image/png\" sizes=\"512x512\" href=\"" + Config.Icon512Url + "\">";
         // PWA manifest: https://web.dev/articles/add-manifest
         html += "<link rel=\"manifest\" href=\"/manifest.json\" />";
         return html;
@@ -125,13 +110,11 @@ public class ActivitiesBase
         var html = "";
         
         // Google analytics
-        
-        string? googleAnalyticsCode = null;
-        foreach(var i in this._Urls) if(i.urlType == UrlTypes.GoogleAnalyticsCode) googleAnalyticsCode = i.url;
-            if(googleAnalyticsCode != null) {
-            html += "<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + googleAnalyticsCode + "\"></script>";
+
+        if(Config.GoogleAnalyticsCode != null) {
+            html += "<script async src=\"https://www.googletagmanager.com/gtag/js?id=" + Config.GoogleAnalyticsCode + "\"></script>";
             // Google analytics - script
-            html += "<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '" + googleAnalyticsCode + "');</script>";
+            html += "<script>window.dataLayer = window.dataLayer || []; function gtag(){dataLayer.push(arguments);} gtag('js', new Date()); gtag('config', '" + Config.GoogleAnalyticsCode + "');</script>";
         }
         return html;
     }
@@ -148,17 +131,14 @@ public class ActivitiesBase
         
         // Yandex metrika
 
-        string? yandexMetrikaCode = null;
-        foreach(var i in this._Urls) if(i.urlType == UrlTypes.YandexMetrikaCode) yandexMetrikaCode = i.url;
-        if(yandexMetrikaCode != null) {
+        if(Config.YandexMetrikaCode != null) {
             html += "<script async src=\"https://mc.yandex.ru/metrika/tag.js\"></script>";
-            html += "<script type=\"text/javascript\">(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }} k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window, document, \"script\", \"https://mc.yandex.ru/metrika/tag.js\", \"ym\");ym(" + yandexMetrikaCode + ", \"init\", { clickmap:true,trackLinks:true,accurateTrackBounce:true });</script>";
-            html += "<noscript><div><img src=\"https://mc.yandex.ru/watch/" + yandexMetrikaCode + "\" style=\"position:absolute; left:-9999px;\" alt=\"\" /></div></noscript>";
+            html += "<script type=\"text/javascript\">(function(m,e,t,r,i,k,a){m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};m[i].l=1*new Date();for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }} k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)})(window, document, \"script\", \"https://mc.yandex.ru/metrika/tag.js\", \"ym\");ym(" + Config.YandexMetrikaCode + ", \"init\", { clickmap:true,trackLinks:true,accurateTrackBounce:true });</script>";
+            html += "<noscript><div><img src=\"https://mc.yandex.ru/watch/" + Config.YandexMetrikaCode + "\" style=\"position:absolute; left:-9999px;\" alt=\"\" /></div></noscript>";
         }
         return html;      
     }
 
-    string IconLink(int size) => "<link rel=\"icon\" type=\"image/png\" rel=\"noopener\" target=\"_blank\" sizes=\"" + size + "x" + size + "\" href=\"" + this.Wwwroot_Activities_Components + "/HeadHtmlBox/content/logo512.png\">";
     string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + ((isCrossorigin) ? "crossorigin" : "") + " />";
 
     // -- Models
@@ -188,7 +168,7 @@ public class ActivitiesBase
                     if (j.componentType == ComponentTypes.Page)
                         pageName = j.methodBase.Name;
 
-                    var url = "wwwroot" + ((j.componentType == ComponentTypes.PageComponent) ? this.Wwwroot_Activities_Components : this.Wwwroot_Activities_UIRs) + "/" + j.methodBase.Name;
+                    var url = "wwwroot" + ((j.componentType == ComponentTypes.PageComponent) ? Config.WebRootUrlPart_Activities_Components : Config.WebRootUrlPart_Activities_UIRs) + "/" + j.methodBase.Name;
 
                     if (j.filesType == FilesTypes.JsAndCss || j.filesType == FilesTypes.JsOnly) scripts.Add(url + "/script.js");
                     if (j.filesType == FilesTypes.JsAndCss || j.filesType == FilesTypes.CssOnly) styles.Add(url + "/style.css");
@@ -196,8 +176,8 @@ public class ActivitiesBase
 
             if(pageName.Length > 0) {
                 var minifyModel = new MinifyModel() { enabled = true, renameLocals = true };
-                ll.Add(new BundleModel() { outputFileName = "wwwroot" + this.Wwwroot_Activities_UIRs + "/" + pageName + "/script.min.js", inputFiles = scripts, minify = minifyModel });
-                ll.Add(new BundleModel() { outputFileName = "wwwroot" + this.Wwwroot_Activities_UIRs + "/" + pageName + "/style.min.css", inputFiles = styles, minify = minifyModel });
+                ll.Add(new BundleModel() { outputFileName = "wwwroot" + Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/script.min.js", inputFiles = scripts, minify = minifyModel });
+                ll.Add(new BundleModel() { outputFileName = "wwwroot" + Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/style.min.css", inputFiles = styles, minify = minifyModel });
             }
         }
 
