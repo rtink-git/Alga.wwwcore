@@ -8,7 +8,18 @@ namespace Alga.wwwcore;
 public abstract class UIsBase
 {
     ConfigModel Config;
-    public UIsBase(ConfigModel config) =>  this.Config = config;
+
+    string Wwwroot_Components;
+    string Wwwroot_ExternalComponents;
+    string Wwwroot_UIRs;
+
+    public UIsBase(ConfigModel config) {
+        this.Config = config;
+
+        this.Wwwroot_Components = "/Components";
+        this.Wwwroot_ExternalComponents = "/ExternalComponents";
+        this.Wwwroot_UIRs = "/UIRs";
+    }
 
     protected List<UrlModel> CompleateComponents(MethodBase? pageMethodBase, UrlModel[] l, List<UrlModel> lsub) { var ll = new List<UrlModel>(); ll.AddRange(l); ll.AddRange(lsub); ll.Add(new UrlModel(pageMethodBase, FilesTypes.JsAndCss, ComponentTypes.UI)); return ll; }
 
@@ -30,7 +41,7 @@ public abstract class UIsBase
         var hd = "";
         foreach (var i in heads)
         {
-            var url = ((i.componentType == ComponentTypes.UIComponent) ? Config.WebRootUrlPart_Activities_Components : Config.WebRootUrlPart_Activities_UIRs) + "/" + ((i.methodBase != null) ? i.methodBase.Name : "");;
+            var url = ((i.componentType == ComponentTypes.UIComponent) ? this.Wwwroot_Components : this.Wwwroot_UIRs) + "/" + ((i.methodBase != null) ? i.methodBase.Name : "");;
 
             if (i.filesType == FilesTypes.JsAndCss || i.filesType == FilesTypes.CssOnly) hd += LinkHtml(url + "/style.css");
             if (i.filesType == FilesTypes.JsAndCss || i.filesType == FilesTypes.JsOnly) hd += ScriptHtml(url + "/script.js", i.componentType);
@@ -46,7 +57,7 @@ public abstract class UIsBase
         if(cacheControlInS > -1) context.Response.Headers[HeaderNames.CacheControl] = "public, max-age=" + cacheControlInS;
         context.Response.ContentType = "text/HTML";
 
-        var hd = LinkHtml(Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/style.min.css") + ScriptHtml(Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/script.min.js", ComponentTypes.UI);
+        var hd = LinkHtml(this.Wwwroot_UIRs + "/" + pageName + "/style.min.css") + ScriptHtml(this.Wwwroot_UIRs + "/" + pageName + "/script.min.js", ComponentTypes.UI);
         await ResponseBase(context, seoTags, headsSub + hd);
     }
 
@@ -135,7 +146,7 @@ public abstract class UIsBase
     // -- nuget: https://www.nuget.org/packages/BuildBundlerMinifier
 
     //public void BundleconfigJsonRebuild(List<List<UrlModel>> l)
-    public void BundleconfigJsonRebuild(Type type)
+    protected void BundleconfigJsonRebuild(Type type)
     {
         var l = new List<List<UrlModel>>();
         
@@ -159,7 +170,7 @@ public abstract class UIsBase
                     if (j.componentType == ComponentTypes.UI)
                         pageName = j.methodBase.Name;
 
-                    var url = "wwwroot" + ((j.componentType == ComponentTypes.UIComponent) ? Config.WebRootUrlPart_Activities_Components : Config.WebRootUrlPart_Activities_UIRs) + "/" + j.methodBase.Name;
+                    var url = "wwwroot" + ((j.componentType == ComponentTypes.UIComponent) ? this.Wwwroot_Components : this.Wwwroot_UIRs) + "/" + j.methodBase.Name;
 
                     if (j.filesType == FilesTypes.JsAndCss || j.filesType == FilesTypes.JsOnly) scripts.Add(url + "/script.js");
                     if (j.filesType == FilesTypes.JsAndCss || j.filesType == FilesTypes.CssOnly) styles.Add(url + "/style.css");
@@ -167,8 +178,8 @@ public abstract class UIsBase
 
             if(pageName.Length > 0) {
                 var minifyModel = new MinifyModel() { enabled = true, renameLocals = true };
-                ll.Add(new BundleModel() { outputFileName = "wwwroot" + Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/script.min.js", inputFiles = scripts, minify = minifyModel });
-                ll.Add(new BundleModel() { outputFileName = "wwwroot" + Config.WebRootUrlPart_Activities_UIRs + "/" + pageName + "/style.min.css", inputFiles = styles, minify = minifyModel });
+                ll.Add(new BundleModel() { outputFileName = "wwwroot" + this.Wwwroot_UIRs + "/" + pageName + "/script.min.js", inputFiles = scripts, minify = minifyModel });
+                ll.Add(new BundleModel() { outputFileName = "wwwroot" + this.Wwwroot_UIRs + "/" + pageName + "/style.min.css", inputFiles = styles, minify = minifyModel });
             }
         }
 
@@ -261,9 +272,6 @@ public abstract class UIsBase
         /// Example: (Alga.wwwcore.Config.IsDebug) ? "https://localhost:1234" : "https://example.com"
         /// </summary>
         string? url = null,
-        string? WebRootUrlPart_Activities_Components =  "/Components",
-        string? WebRootUrlPart_Activities_ExternalComponents = "/ExternalComponents",
-        string? WebRootUrlPart_Activities_UIRs = "/UIRs",
         int UICacheControlInSDefault = -1,
         /// <summary>
         /// Project Icon 32x32 px.

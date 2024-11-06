@@ -23,6 +23,28 @@ ASP.NET Core minimal api programming approach, the purpose of which is to facili
 
 5. Create "wwwcore.cs" file (Project/wwwcore.cs)
 
+```
+using System.Reflection;
+using Alga.wwwcore;
+
+public class Wwwcore: UIsBase
+{
+    public Wwwcore(ConfigModel config) : base(config) { if(config.IsDebug) BundleconfigJsonRebuild(typeof(Wwwcore)); }
+
+    // -- UI Components - groups.
+
+    // -- Pages UI. Consist of the page code and components that are called from it. For release versions all components(+page script & style) are collected into two files: /UIRs/[current page]/[script.min.js & style.min.css]
+    // -- Path: wwwroot/UIRs
+
+    // -- UI Components
+    // -- Path: wwwroot/Components
+
+    // -- ExternalComponents. External page components that are not recomended to be combined into one main file
+    // -- Path: wwwroot/ExternalComponents/
+}
+
+```
+
 6. Program.cs & "Alga.wwwcore" nuget package
 
 ```
@@ -47,13 +69,3 @@ var uis = new Wwwcore(new Alga.wwwcore.UIsBase.ConfigModel(
 app.MapGet("/", async (context) => { await uis.Response(context, uis.i(), uis.SEO("Project", "")); }).WithRequestTimeout(S5TimeoutPolicy).CacheOutput(ThreeHOutputCachePolicy);
 app.MapGet("/about", async (context) => { await uis.Response(context, uis.about(), uis.SEO("О компании", "")); }).WithRequestTimeout(S5TimeoutPolicy).CacheOutput(ThreeHOutputCachePolicy);
 ```
-
-
-### Updates
-
-- Version 1.1.1: Nuget package structure has been updated and minified
-- Version 1.1.1: Bundleconfig.json file generated automatically
-- Version 1.0.11: A Config.cs file has been added to set basic parameters
-- Version 1.0.10: A critical error that was associated with the operation of the pocket in the DEBUG & RELEASE status has been fixed
-- Version 1.0.0 The ability to add configuration rules during initialization has been added
-- Version 1.0.8: Base directories are authomatically added to "wwwroot"
