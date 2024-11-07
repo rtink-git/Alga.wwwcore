@@ -2,23 +2,29 @@ using System.Text.Json;
 using System.Reflection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
+using System.Runtime.CompilerServices;
+using System.IO;
 
 namespace Alga.wwwcore;
 
 public abstract class UIsBase
 {
+    bool _IsDebug { get; }
     ConfigModel Config;
 
     string Wwwroot_Components;
-    string Wwwroot_ExternalComponents;
+    public string Wwwroot_ExternalComponents;
     string Wwwroot_UIRs;
 
-    public UIsBase(ConfigModel config) {
+    public UIsBase(bool isDebug, ConfigModel config) {
+        this._IsDebug = isDebug;
         this.Config = config;
 
         this.Wwwroot_Components = "/Components";
         this.Wwwroot_ExternalComponents = "/ExternalComponents";
         this.Wwwroot_UIRs = "/UIRs";
+
+        if(this._IsDebug) ManifestJsonGenerate();
     }
 
     protected List<UrlModel> CompleateComponents(MethodBase? pageMethodBase, UrlModel[] l, List<UrlModel> lsub) { var ll = new List<UrlModel>(); ll.AddRange(l); ll.AddRange(lsub); ll.Add(new UrlModel(pageMethodBase, FilesTypes.JsAndCss, ComponentTypes.UI)); return ll; }
@@ -27,7 +33,7 @@ public abstract class UIsBase
 
     public async Task Response(HttpContext context, List<UrlModel> heads, string? seoTags = null, string? headsSub = null, int cacheControlInS = -1)
     {
-        if(!Config.IsDebug) {
+        if(!this._IsDebug) {
             var pageName = "";
             foreach(var i in heads)
                 if(i.componentType == ComponentTypes.UI && i.methodBase != null) { pageName = i.methodBase.Name; break; }
@@ -96,10 +102,19 @@ public abstract class UIsBase
 
     string PageHeadIconsAndManifest() {
         var html = "";
-        if(Config.Icon180Url != null) html += "<link rel=\"apple-touch-icon\" href=\"" + Config.Icon180Url + "/logo180.png\">";
-        if(Config.Icon32Url != null) html += "<link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"" + Config.Icon32Url + "\">";
-        if(Config.Icon192Url != null) html += "<link rel=\"icon\" type=\"image/png\" sizes=\"192x192\" href=\"" + Config.Icon192Url + "\">";
-        if(Config.Icon512Url != null) html += "<link rel=\"icon\" type=\"image/png\" sizes=\"512x512\" href=\"" + Config.Icon512Url + "\">";
+        html += IconLinkHtml(32);
+        html += IconLinkHtml(48);
+        html += IconLinkHtml(64);
+        html += IconLinkHtml(70);
+        html += IconLinkHtml(120, "apple-touch-icon");
+        html += IconLinkHtml(150, "msapplication-TileImage");
+        html += IconLinkHtml(152, "apple-touch-icon");
+        html += IconLinkHtml(167, "apple-touch-icon");
+        html += IconLinkHtml(180, "apple-touch-icon");
+        html += IconLinkHtml(192);
+        html += IconLinkHtml(310, "msapplication-TileImage");
+        html += IconLinkHtml(512);
+        
         // PWA manifest: https://web.dev/articles/add-manifest
         html += "<link rel=\"manifest\" href=\"/manifest.json\" />";
         return html;
@@ -140,6 +155,9 @@ public abstract class UIsBase
     }
 
     string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + ((isCrossorigin) ? "crossorigin" : "") + " />";
+
+    string IconLinkHtml(int size, string rel = "icon") => "<link rel=\"" + rel + "\" href=\"/Components/Total/content/Icon-" + size + ".png\" sizes=\"" + size + "x" + size + "\" type=\"image/png\">";
+    
 
     // -- BundlerMinifier
     // -- nuget: https://www.nuget.org/packages/BundlerMinifier.Core
@@ -207,6 +225,45 @@ public abstract class UIsBase
 
     // --
 
+    void ManifestJsonGenerate() {
+        var manifestModel = new ManifestModel() {
+            name = Config.Name,
+            short_name = Config.NameShort,
+            description = Config.Description,
+            background_color = Config.BackgroundColor,
+            theme_color = Config.ThemeColor,
+            icons = new List<Icon>() {
+                new Icon() { src = "/Components/Total/content/Icon-192", sizes="192x192", type="image/png" },
+                new Icon() { src = "/Components/Total/content/Icon-512", sizes="512x512", type="image/png" }
+            }
+        };
+
+        var url = Environment.CurrentDirectory + "/wwwroot/manifest.json";
+        if(!File.Exists(url)) {
+            using FileStream createStream = File.Create(Environment.CurrentDirectory + "/wwwroot/manifest.json");
+            JsonSerializer.SerializeAsync(createStream, manifestModel);
+        }
+    }
+
+    class ManifestModel {
+        public string id { get; set;} = "/";
+        public string scope { get; set; } = "/";
+        public string start_url { get; set;} = "/";
+        public string display  {get; set;} = "standalone";
+        public string name { get; set; } = "";
+        public string short_name { get; set;} = "";
+        public string description { get; set; } = "";
+        public string background_color { get; set; } = "#FFFFFF";
+        public string theme_color { get; set; } = "#FFFFFF";
+        public List<Icon>? icons { get; set; } = null;
+    }
+
+    public class Icon {
+        public string? src { get; set; } = null;
+        public string? type { get; set; } = null;
+        public string? sizes { get; set; } = null;
+    }
+
     public string SEO(string title, string? description = null, string? robot = null, string? urlCanonical = null, string? imageUrl = null)
     {
         var html = "";
@@ -215,20 +272,20 @@ public abstract class UIsBase
 
         if (robot != null) html += "<meta name=\"robots\" content=\"" + robot + "\">";
         if (description != null) html += "<meta name=\"description\" content=\"" + description + "\">";
-        if (urlCanonical != null) html += "<meta rel=\"canonical\" href=\"" + Config.url + urlCanonical + "\">";
+        if (urlCanonical != null) html += "<meta rel=\"canonical\" href=\"" + Config.Url + urlCanonical + "\">";
 
         // -- og
 
-        if (!string.IsNullOrEmpty(Config.name) && !string.IsNullOrEmpty(title))
+        if (!string.IsNullOrEmpty(Config.Name) && !string.IsNullOrEmpty(title))
         {
-            html += "<meta property=\"og:site_name\" content=\"" + Config.name + "\">";
+            html += "<meta property=\"og:site_name\" content=\"" + Config.Name + "\">";
             html += "<meta property=\"og:type\" content=\"article\">";
-            html += "<meta property=\"og:url\" content=\"" + Config.url + "\">";
+            html += "<meta property=\"og:url\" content=\"" + Config.Url + "\">";
             html += "<meta property=\"og:title\" content=\"" + title + "\">";
             if (!string.IsNullOrEmpty(description)) { html += "<meta property=\"og:description\" content=\"" + description + "\">"; }
             if (!string.IsNullOrEmpty(imageUrl))
             {
-                html += "<meta property=\"og:image\" content=\"" + Config.url + imageUrl + "\">";
+                html += "<meta property=\"og:image\" content=\"" + Config.Url + imageUrl + "\">";
                 html += "<meta property=\"og:image:alt\" content=\"" + title + "\">";
             }
         }
@@ -253,70 +310,4 @@ public abstract class UIsBase
 
         return html;
     }
-
-    // -- Model
-
-    public record ConfigModel(
-        /// <summary>
-        /// Building status
-        /// Example: true (is debug) / false (is release)
-        /// </summary>
-        bool IsDebug = true,
-        /// <summary>
-        /// Project name
-        /// Example: Myproject
-        /// </summary>
-        string? name = null,
-        /// <summary>
-        /// Project url
-        /// Example: (Alga.wwwcore.Config.IsDebug) ? "https://localhost:1234" : "https://example.com"
-        /// </summary>
-        string? url = null,
-        int UICacheControlInSDefault = -1,
-        /// <summary>
-        /// Project Icon 32x32 px.
-        /// Recomended url (is default): "wwwroot/Components/Total/content/Icon-32.png"
-        /// </summary>
-        string? Icon32Url = "/Components/Total/content/Icon-32.png",
-        /// <summary>
-        /// Project Icon 180x180 px.
-        /// Recomended url (is default): "wwwroot/Components/Total/content/Icon-180.png"
-        /// </summary>
-        string? Icon180Url = "/Components/Total/content/Icon-180.png",
-        /// <summary>
-        /// Project Icon 192x192 px.
-        /// Recomended url (is default): "wwwroot/Components/Total/content/Icon-192.png"
-        /// </summary>
-        string? Icon192Url = "/Components/Total/content/Icon-192.png",
-        /// <summary>
-        /// Project Icon 512x512 px.
-        /// Recomended url (is default): "wwwroot/Components/Total/content/Icon-512.png"
-        /// </summary>
-        string? Icon512Url = "/Components/Total/content/Icon-512.png",
-        /// <summary>
-        /// Preconnect urls
-        /// Example: new List<string>() { api.example.com, api1.example.com, api2.example.com }
-        /// </summary>
-        List<string>? PreconnectUrls = null,
-        /// <summary>
-        /// Google Fonts 
-        /// https://fonts.google.com/
-        /// </summary>
-        string? GoogleFontsUrl = null,
-        /// <summary>
-        /// Google Analytics Code
-        /// Example: G-9DDDCCTTXX
-        /// </summary>
-        string? GoogleAnalyticsCode = null,
-        /// <summary>
-        /// Yandex Metrika Code
-        /// Example: 99991111
-        /// </summary>
-        string? YandexMetrikaCode = null,
-        /// <summary>
-        /// Twitter account name
-        /// Example: @ElonMusk
-        /// </summary>
-        string? TwitterSite = null
-    );
 }
