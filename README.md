@@ -42,7 +42,7 @@ The purpose of this package is to simplify the development of web applications i
 - Create "UIRs" dirictory (wwwroot/UIRs)
 
 
-5. Create "wwwcore.cs" file (Project/wwwcore.cs)
+5. Create "Wwwcore.cs" file (/Wwwcore.cs)
 
 ```
 using System.Reflection;

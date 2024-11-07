@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2012/06/nuspec.xsd">
   <metadata>
     <id>Alga.wwwcore</id>
-    <version>1.2.1</version>
+    <version>1.2.2</version>
     <authors>wwwcore</authors>
     <readme>README.md</readme>
     <description>Package Description</description>
