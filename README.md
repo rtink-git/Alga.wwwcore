@@ -42,31 +42,82 @@ The purpose of this package is to simplify the development of web applications i
 - Create "UIRs" dirictory (wwwroot/UIRs)
 
 
-5. Create "Wwwcore.cs" file (/Wwwcore.cs)
+5. Create "wwwroot.cs" file (/wwwroot.cs) - A scheme that follows the directory (with files) structure of "wwwroot" directory.
+The class "wwwroot" must inherit the abstract class "SchemeB" from Alga.wwwcore
+
+Code example: 
 
 ```
 using System.Reflection;
 using Alga.wwwcore;
 
-public class Wwwcore: UIsBase
+public class wwwroot: SchemeB
 {
-    public Wwwcore(ConfigModel config) : base(config) { if(config.IsDebug) BundleconfigJsonRebuild(typeof(Wwwcore)); }
+    ConfigM Config;
+    public wwwroot(ConfigM config): base(config) => this.Config = config;
 
-    // -- UI Components - groups.
+    // -- User Interface Screens (Pages)
+    // -- Path: wwwroot/UISs - derectory. Here are the located of your project UISs (Pages)
+    // -- Path: wwwroot/UISs/{Index} - UIS (Page) directory. Here are the located files that are necessary to display the UIS (Page)
+    // -- Path: wwwroot/UISs/{Index}/script.js - Javascript file with executable code that builds the UIS (Page) (runs modules and other UIS's (Page's) code) and displays it on the device screen. Recommended file name: script.js.
+    // -- Path: wwwroot/UISs/{Index}/style.css - UIS (Page) styles file. Recommended file name: style.css.  If the page consists of modules with their own styles, it is not necessary to add this file
+    // -- Code example: public ScreenM Index() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), ListGHtmlBox(), MoreButtonUI()], [], this.Config );
+    // -- Code description:
+    // -- "Index" - method name that matches the directory located on the path: wwwroot/UISs/Index.
+    // -- MethodBase.GetCurrentMethod() - Getting the object "Method" with which we get the name of this method (Index)
+    // -- DirСontainFilesEnum.JsAndCss - Specify what type of files are in the directory
+    // -- [ HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), ListGHtmlBox(), MoreButtonUI() ] - Add "ModuleM" standard modules, that run on this page (executable script.js code)
+    // -- [ MomentjsCom() ] - Add "ModuleExtM" standard modules, which can be used regardless executable script.js code
+    // -- this.Config - Project configuration params
 
-    // -- Pages UI. Consist of the page code and components that are called from it. For release versions all components(+page script & style) are collected into two files: /UIRs/[current page]/[script.min.js & style.min.css]
-    // -- Path: wwwroot/UIRs
+    public ScreenM bookmarks() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), ListGHtmlBox(), MoreButtonUI()], [], this.Config );
+    public ScreenM Error() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox() ], [], this.Config);
+    public ScreenM i() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), ListGHtmlBox(), MoreButtonUI() ], [ MomentjsCom() ], this.Config);
+    public ScreenM Locs() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), LocationsHtmlBox_20231116(), TitleDescriptionAHtmlBox() ], [], this.Config);
+    public ScreenM Settings() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), ButtonDeleteHtmlBox(), SelectFormHtmlBox(), UserIconHtmlBox(), InputTextFormHtmlBox(), TextareaFormHtmlBox(), TitleDescriptionAHtmlBox() ], [], this.Config );
+    public ScreenM u() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), ListGHtmlBox(), TitleDescriptionUserHtmlBox(), MoreButtonUI(), UserIconHtmlBox() ], [], this.Config);
+    public ScreenM users() => new SchemeB.ScreenM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsAndCss, [ ApiRtInk_MSAP(), HeadHtmlBox(), HeaderTextUI(), FooterInfHtmlBox(), UsersHtmlBox(), UserIconHtmlBox(), MoreButtonUI() ], [], this.Config);
 
-    // -- UI Components
-    // -- Path: wwwroot/Components
+    // -- UIS Modules of standart "ModuleM"
+    // -- Path: wwwroot/Modules - derectory. Here are the located modules that can be used by any of the UIS (Page)
+    // -- Path: wwwroot/Modules/{FooterInfHtmlBox} - Module directory.
+    // -- Path: wwwroot/UISs/{FooterInfHtmlBox}/script.js - Javascript file with Module class. Recommended file name: script.js. The module may not support the script.css
+    // -- Path: wwwroot/UISs/{FooterInfHtmlBox}/style.css - Module styles file. Recommended file name: style.css. The module may not support the style.css)
+    // -- Code example: ModuleM FooterInfHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    // -- "FooterInfHtmlBox" - method name that matches the directory located on the path: wwwroot/Modules/Index.
+    // -- MethodBase.GetCurrentMethod() - Getting the object "Method" with which we get the name of this method (FooterInfHtmlBox)
+    // -- DirСontainFilesEnum.JsAndCss - Specify what type of files are in the directory
 
-    // -- ExternalComponents. External page components that are not recomended to be combined into one main file
-    // -- Path: wwwroot/ExternalComponents/
+    ModuleM ApiRtInk_MSAP() => new ModuleM(MethodBase.GetCurrentMethod(), DirСontainFilesEnum.JsOnly);
+    ModuleM ButtonDeleteHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM FooterInfHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM HeaderTextUI() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM HeadHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM InputTextFormHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM ListGHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM LocationsHtmlBox_20231116() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM MoreButtonUI() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM SelectFormHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM TextareaFormHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM TitleDescriptionAHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM TitleDescriptionUserHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM UserIconHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+    ModuleM UsersHtmlBox() => new ModuleM(MethodBase.GetCurrentMethod());
+
+    // -- UIS External Modules
+    // -- UIS Modules of standart "ModuleExtM". All other modules or files that must be executed by the UIS (Page)
+    // -- Code example: ModuleExtM MomentjsCom() => new ModuleExtM(MethodBase.GetCurrentMethod(), "/ExternalComponents/MomentjsCom/moment-timezone.min.js");
+    // -- MethodBase.GetCurrentMethod() - Getting the object "Method" with which we get the name of this method (MomentjsCom)
+    // -- "/ExternalComponents/MomentjsCom/moment-timezone.min.js" - Path to file
+
+    ModuleExtM MomentjsCom() => new ModuleExtM(MethodBase.GetCurrentMethod(), "/ExternalComponents/MomentjsCom/moment-timezone.min.js");
 }
 
 ```
 
 6. Program.cs & "Alga.wwwcore" nuget package
+
+Code example:
 
 ```
 var isDebug = true;
@@ -79,14 +130,26 @@ if (!app.Environment.IsDevelopment())
 
 ...
 
-var uis = new Wwwcore(new Alga.wwwcore.UIsBase.ConfigModel(
+var w = new wwwroot(new ConfigM(
     IsDebug: isDebug,
-    name: "My Store",
-    url: (isDebug) ? "https://localhost:6543" : "https://example.com",
+    Url: (isDebug) ? "https://localhost:6543" : "https://example.com",
+    Name: "My Store project",
+    NameShort: "My Store",
+    Description: "About my store, short information",
+    CacheControlInSDefault: 3*60*60,
+    PreconnectUrls: [ RtInk.Constants.url_api ],
     GoogleFontsUrl: "https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap",
-    UICacheControlInSDefault: ForhouseWeb.Constants.threeHInSecForCache
+    GoogleAnalyticsCode: "G-111EEEE",
+    YandexMetrikaCode: "12342221"
 ));
 
-app.MapGet("/", async (context) => { await uis.Response(context, uis.i(), uis.SEO("Project", "")); }).WithRequestTimeout(S5TimeoutPolicy).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/about", async (context) => { await uis.Response(context, uis.about(), uis.SEO("О компании", "")); }).WithRequestTimeout(S5TimeoutPolicy).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/", async (context) => { await w.i().SendAsync(context, await i_seo(context)); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/a/{urlShort}", async (HttpContext context, IHttpClientFactory httpClientFactory) => { await w.i().SendAsync(context, await i_seo(context, httpClientFactory)); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/bookmarks", async (context) => { await w.bookmarks().SendAsync(context, new SeoM("Bookmarks", "", "noindex")); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/error", async (context) => { await w.Error().SendAsync(context, new SeoM("Error - RT", "Page was not found", "noindex")); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/i/{search}", async (HttpContext context, IHttpClientFactory httpClientFactory) => { await w.i().SendAsync(context, await i_seo(context, httpClientFactory)); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/locs", async (context) => { await w.Locs().SendAsync(context, new SeoM("Countries", "Choose your country. Subscribe to them and read the news.")); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/settings", async (context) => { await w.Settings().SendAsync(context, new SeoM("Settings", "User settings, followers and followings", "noindex")); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/u/{login-search}", async (HttpContext context, IHttpClientFactory httpClientFactory) => { await w.u().SendAsync(context, await u_seo(context, httpClientFactory)); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/users", async (context) => { await w.users().SendAsync(context, new SeoM("Users", "")); }).CacheOutput(ThreeHOutputCachePolicy);
 ```

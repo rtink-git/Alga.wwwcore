@@ -4,9 +4,11 @@
     <id>Alga.wwwcore</id>
     <version>1.2.2</version>
     <authors>wwwcore</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
     <readme>README.md</readme>
     <description>Package Description</description>
-    <repository type="git" url="https://github.com/rtink-git/Alga.wwwcore" commit="f7911b5e39c68615957ac0f00b60d86dc01d1b57" />
+    <repository type="git" url="https://github.com/rtink-git/Alga.wwwcore" commit="8854a884c80f4d41e22a0e7cb1269b6332022698" />
     <dependencies>
       <group targetFramework="net8.0">
         <dependency id="Microsoft.AspNetCore.Http" version="2.2.2" exclude="Build,Analyzers" />
