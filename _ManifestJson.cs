@@ -8,7 +8,7 @@ class _ManifestJson
     internal _ManifestJson(ConfigM config) => this._ConfigM = config;
 
     internal void Build() {
-        var manifestModel = new ManifestM() {
+        var manifestModel = new ManifestM {
             name = this._ConfigM.Name,
             short_name = this._ConfigM.NameShort,
             description = this._ConfigM.Description,
@@ -30,9 +30,10 @@ class _ManifestJson
         public string description { get; set; } = "";
         public string background_color { get; set; } = "#FFFFFF";
         public string theme_color { get; set; } = "#FFFFFF";
-        public List<IconM>? icons { get; set; } = new List<IconM> {
-            new IconM( src: "/Modules/Total/content/Icon-192", sizes: "192x192", type: "image/png"),
-            new IconM( src: "/Modules/Total/content/Icon-512", sizes: "512x512", type: "image/png" )
+        public List<IconM> icons { get; set; } = new List<IconM>
+        {
+            new IconM("/Modules/Total/content/Icon-192", "image/png", "192x192"),
+            new IconM("/Modules/Total/content/Icon-512", "image/png", "512x512")
         };
     }
 

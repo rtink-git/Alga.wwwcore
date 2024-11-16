@@ -2,6 +2,14 @@ using System.Text;
 
 namespace Alga.wwwcore;
 
+/// <summary>
+/// A record that holds SEO metadata and generates the corresponding HTML meta tags.
+/// </summary>
+/// <param name="Title">The title of the page</param>
+/// <param name="Description">A short description of the page content</param>
+/// <param name="Robot">Robots meta tag (used for controlling search engine crawlers)</param>
+/// <param name="UrlCanonical">The canonical URL for the page to avoid duplicate content.</param>
+/// <param name="ImageUrl">The URL of an image to use for social media previews.</param>
 public record SeoM (
     string Title, 
     string? Description = null, 
@@ -9,6 +17,11 @@ public record SeoM (
     UrlCanonical = null, string? 
     ImageUrl = null
 ) {
+    /// <summary>
+    /// Generates a string of HTML meta tags based on the SEO metadata in this record.
+    /// </summary>
+    /// <param name="config">The configuration object that holds site-specific data (e.g., URL, site name, Twitter handle).</param>
+    /// <returns>A string of HTML meta tags for the SEO configuration.</returns>
     internal string MergeTags(ConfigM config) {
         var html = new StringBuilder();
 
@@ -16,19 +29,19 @@ public record SeoM (
 
         AddMetaTag(html, "robots", Robot);
         AddMetaTag(html, "description", Description);
-        if (!string.IsNullOrEmpty(UrlCanonical)) html.AppendFormat("<meta rel=\"canonical\" href=\"{0}{1}\">", config.Url, UrlCanonical);
+        if (!string.IsNullOrEmpty(UrlCanonical)) html.Append($"<meta rel=\"canonical\" href=\"{config.Url}{UrlCanonical}\">");
 
         if (string.IsNullOrEmpty(Title)) return html.ToString();
 
-        html.AppendFormat("<title>{0}</title>", Title);
+        if (!string.IsNullOrEmpty(Title)) html.Append($"<title>{Title}</title>");
 
         // --- Open Graph meta tags ---
         if (!string.IsNullOrEmpty(config.Name))
         {
-            html.AppendFormat("<meta property=\"og:site_name\" content=\"{0}\">", config.Name);
+            html.Append($"<meta property=\"og:site_name\" content=\"{config.Name}\">");
             html.Append("<meta property=\"og:type\" content=\"article\">");
-            html.AppendFormat("<meta property=\"og:url\" content=\"{0}\">", config.Url);
-            html.AppendFormat("<meta property=\"og:title\" content=\"{0}\">", Title);
+            html.Append($"<meta property=\"og:url\" content=\"{config.Url}\">");
+            html.Append($"<meta property=\"og:title\" content=\"{Title}\">");
             AddMetaTag(html, "og:description", Description);
             AddImageMetaTag(html, "og", ImageUrl, Title, config.Url);
         }
@@ -36,10 +49,10 @@ public record SeoM (
         // --- Twitter meta tags ---
         if (!string.IsNullOrEmpty(config.TwitterSite))
         {
-            html.AppendFormat("<meta name=\"twitter:site\" content=\"{0}\">", config.TwitterSite);
+            html.Append($"<meta name=\"twitter:site\" content=\"{config.TwitterSite}\">");
             html.Append("<meta name=\"twitter:card\" content=\"summary_large_image\">");
             html.Append("<meta name=\"twitter:description\" content=\"summary_large_image\">");
-            html.AppendFormat("<meta name=\"twitter:title\" content=\"{0}\">", Title);
+            html.Append($"<meta name=\"twitter:title\" content=\"{Title}\">");
             AddMetaTag(html, "twitter:description", Description);
             AddImageMetaTag(html, "twitter", ImageUrl, Title);
         }
@@ -47,18 +60,28 @@ public record SeoM (
         return html.ToString();
     }
 
-    void AddMetaTag(StringBuilder html, string name, string? content)
-    {
-        if (!string.IsNullOrEmpty(content))
-            html.AppendFormat("<meta name=\"{0}\" content=\"{1}\">", name, content);
-    }
+    /// <summary>
+    /// Helper method that adds a meta tag to the HTML string if the content is not null or empty.
+    /// </summary>
+    /// <param name="html"></param>
+    /// <param name="name"></param>
+    /// <param name="content"></param>
+    void AddMetaTag(StringBuilder html, string name, string? content) { if (!string.IsNullOrEmpty(content)) html.Append($"<meta name=\"{name}\" content=\"{content}\">"); }
 
+    /// <summary>
+    /// Helper method that adds image-related meta tags (e.g., for Open Graph and Twitter).
+    /// </summary>
+    /// <param name="html"></param>
+    /// <param name="prefix"></param>
+    /// <param name="imageUrl"></param>
+    /// <param name="title"></param>
+    /// <param name="baseUrl"></param>
     void AddImageMetaTag(StringBuilder html, string prefix, string? imageUrl, string title, string baseUrl = "")
     {
         if (!string.IsNullOrEmpty(imageUrl))
         {
-            html.AppendFormat("<meta property=\"{0}:image\" content=\"{1}{2}\">", prefix, baseUrl, imageUrl);
-            html.AppendFormat("<meta property=\"{0}:image:alt\" content=\"{1}\">", prefix, title);
+            html.Append($"<meta property=\"{prefix}:image\" content=\"{baseUrl}{imageUrl}\">");
+            html.Append($"<meta property=\"{prefix}:image:alt\" content=\"{title}\">");
         }
     }
 };
