@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Text;
 
@@ -6,10 +7,16 @@ namespace Alga.wwwcore;
 class _UISchemes
 {
     readonly ConfigM ConfigM;
-    internal _UISchemes(ConfigM configM) => this.ConfigM = configM;
+    readonly ILogger? logger;
+    internal _UISchemes(ConfigM configM, ILoggerFactory? loggerFactory) {
+        this.ConfigM = configM;
+        if(loggerFactory != null) logger = loggerFactory.CreateLogger<_UISchemes>();
+    }
 
     internal List<M> Build() {
         var l = new List<M>();
+
+        var f = CheckPrerequisites();
 
         var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
         var UISsPath = Path.Combine(wwwrootPath, "UISs");
@@ -81,6 +88,52 @@ class _UISchemes
         }
 
         return l;
+    }
+
+    bool CheckPrerequisites() {
+        bool f = false;
+
+        var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+
+        if(Directory.Exists(wwwrootPath)) {
+            var UISsPath = Path.Combine(wwwrootPath, "UISs");
+            if(Directory.Exists(wwwrootPath)) {
+                var modulesPath = Path.Combine(wwwrootPath, "Modules");
+                if(Directory.Exists(modulesPath)) {
+                    var totalPath = Path.Combine(modulesPath, "Total");
+                    if(Directory.Exists(totalPath)) {
+                        var contentPath = Path.Combine(totalPath, "content");
+                        if(Directory.Exists(contentPath)) {
+                            var contentFiles = Directory.GetFiles(contentPath);
+
+                            foreach(var i in new[] { 32, 48, 64, 70, 120, 150, 152, 167, 180, 192, 310, 512 }) {
+                                var fileF = false;
+                                foreach(var j in contentFiles){
+                                    var info = new FileInfo(j);
+                                    if(info != null) {
+                                        if(info.Name == $"Icon-{i}.png") {
+                                            fileF = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if(!fileF)
+                                    if(this.logger != null) logger.LogWarning($"\"wwwroot/Modules/Total/content\" directory does not contain Icon-{i}.png file. It is needed for SEO to work correctly.");
+                            }
+                        }
+                        else if(this.logger != null) logger.LogWarning("\"wwwroot/Modules/Total\" directory does not contain the \"content\" directory");
+                    }
+                    else if(this.logger != null) logger.LogWarning("\"wwwroot/Modules\" directory does not contain the \"Total\" directory");
+                }
+                else if(this.logger != null) logger.LogWarning("\"wwwroot\" directory does not contain the \"Modules\" directory");
+
+                f = true;
+            }
+            else if(this.logger != null) logger.LogError("\"wwwroot\" directory does not contain the \"UISs\" directory, which is required for the library to work");
+        }
+        else if(this.logger != null) logger.LogCritical("Your project does not contain a public directory \"wwwroot\" in the root of your solution");
+
+        return f;
     }
 
     void HeadBuild(StringBuilder head, string name, string? nameCss, string nameJs, List<Module> modulesCss, List<Module>? modulesJs) {

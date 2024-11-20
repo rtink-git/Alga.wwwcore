@@ -27,20 +27,9 @@ The Alga.wwwcore nuget package makes it easy to develop web applications in ASP.
 4. Open "wwwroot" directory (if not exist - create it)
 
 - Create "Components" dirictory (wwwroot/Modules)
-- - Create "Total" dirictory   - is main component
+- - Create "Total" dirictory - is main component
 - - - Create "content" dirictory (wwwroot/Modules/Total/content) - this is where images and other files will be stored
-- - - - Add "Icon-32.png" (32x32px) (wwwroot/Modules/Total/content/Icon-32.png) - will be used as an Favicon icon
-- - - - Add "Icon-48.png" (48x48px) (wwwroot/Modules/Total/content/Icon-38.png) - will be used as an Favicon icon
-- - - - Add "Icon-64.png" (64x64px) (wwwroot/Modules/Total/content/Icon-64.png) - will be used as an Favicon icon
-- - - - Add "Icon-70.png" (70x70px) (wwwroot/Modules/Total/content/Icon-70.png) - will be used as an Microsoft Tiles icon
-- - - - Add "Icon-120.png" (120x120px) (wwwroot/Modules/Total/content/Icon-120.png) - will be used as an Apple Touch icon
-- - - - Add "Icon-150.png" (150x150px) (wwwroot/Modules/Total/content/Icon-150.png) - will be used as an Microsoft Tiles icon
-- - - - Add "Icon-152.png" (152x152px) (wwwroot/Modules/Total/content/Icon-152.png) - will be used as an Apple Touch icon
-- - - - Add "Icon-167.png" (167x167px) (wwwroot/Modules/Total/content/Icon-167.png) - will be used as an Apple Touch icon
-- - - - Add "Icon-180.png" (180x180px) (wwwroot/Modules/Total/content/Icon-180.png) - will be used as an Apple Touch icon
-- - - - Add "Icon-192.png" (192x192px) (wwwroot/Modules/Total/content/Icon-192.png) - will be used as an Android and PWA icon
-- - - - Add "Icon-310.png" (310x310px) (wwwroot/Modules/Total/content/Icon-310.png) - will be used as an Microsoft Tiles icon
-- - - - Add "Icon-512.png" (512x512px) (wwwroot/Modules/Total/content/Icon-512.png) - will be used as an Android and PWA icon
+- - - - Add Icons: Icon-32.png (32x32px) + ("Icon-48.png" (48x48px), "Icon-64.png" (64x64px), "Icon-70.png" (70x70px), "Icon-120.png" (120x120px), "Icon-150.png" (150x150px), "Icon-152.png (152x152px), "Icon-167.png" (167x167px), "Icon-180.png" (180x180px), "Icon-192.png" (192x192px), "Icon-310.png" (310x310px), "Icon-512.png" (512x512px))
 - Create "UIRs" dirictory (wwwroot/UIRs) - For your Pages (UI Screens) - Required
 - - Create Page (UI Screen) directory {Index} (wwwroot/UIRs/Index)
 - - - Create file "script.js" (wwwroot/UIRs/Index/script.js) - Required. This is the file that will be called to build the page (UI Screen)
@@ -116,6 +105,17 @@ app.MapGet("/u/{login-search}", async (HttpContext context, IHttpClientFactory h
 app.MapGet("/users", async (context) => { await www.SendAsync(context, "users"); }).CacheOutput(ThreeHOutputCachePolicy);
 
 ```
+
+
+
+
+
+### Logging
+
+A logging system with hints and error information was added to the project. Monitor them in the debug console.
+
+
+
 
 
 ## ASP.NET Core Project

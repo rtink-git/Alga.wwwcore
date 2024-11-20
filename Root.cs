@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 namespace Alga.wwwcore;
 
@@ -11,6 +12,7 @@ public class Root
     /// The configuration manager used to retrieve App configuration.
     /// </summary>
     readonly ConfigM ConfigM;
+    readonly ILogger? logger;
     /// <summary>
     /// A list of User Interface Screens schemes used for rendering views.
     /// </summary>
@@ -21,9 +23,12 @@ public class Root
     /// </summary>
     /// <param name="config">A configuration object containing general App settings.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="config"/> is null.</exception>
-    public Root(ConfigM config) {
+    public Root(ConfigM config, ILoggerFactory? loggerFactory) {
         this.ConfigM = config ?? throw new ArgumentNullException(nameof(config));
-        this.UISchemes = new _UISchemes(config).Build();
+        if(loggerFactory != null) logger = loggerFactory.CreateLogger<Root>();
+        if(logger  != null) logger.LogInformation("Started");
+
+        this.UISchemes = new _UISchemes(config, loggerFactory).Build();
 
         // Conditional initialization if debugging
         if(this.ConfigM.IsDebug) {
