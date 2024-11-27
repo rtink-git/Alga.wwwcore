@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 namespace Alga.wwwcore;
@@ -23,10 +23,10 @@ public class Root
     /// </summary>
     /// <param name="config">A configuration object containing general App settings.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="config"/> is null.</exception>
-    public Root(ConfigM config, ILoggerFactory? loggerFactory) {
+    public Root(ConfigM config, ILoggerFactory? loggerFactory = null) {
         this.ConfigM = config ?? throw new ArgumentNullException(nameof(config));
         if(loggerFactory != null) logger = loggerFactory.CreateLogger<Root>();
-        if(logger  != null) logger.LogInformation("Started");
+        logger?.LogInformation("Started");
 
         this.UISchemes = new _UISchemes(config, loggerFactory).Build();
 

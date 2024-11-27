@@ -12,7 +12,7 @@ The Alga.wwwcore nuget package makes it easy to develop web applications in ASP.
 
 
 
-### How does this work. Step by step
+## How does this work. Step by step
 
 1. Create ASP.NET Core project or open an existing project
 
