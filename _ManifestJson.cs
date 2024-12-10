@@ -32,8 +32,8 @@ class _ManifestJson
         public string theme_color { get; set; } = "#FFFFFF";
         public List<IconM> icons { get; set; } = new List<IconM>
         {
-            new IconM("/Modules/Total/content/Icon-192", "image/png", "192x192"),
-            new IconM("/Modules/Total/content/Icon-512", "image/png", "512x512")
+            new IconM("/Modules/Total/content/Icon-192.png", "image/png", "192x192"),
+            new IconM("/Modules/Total/content/Icon-512.png", "image/png", "512x512")
         };
     }
 

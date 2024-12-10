@@ -12,7 +12,7 @@ class _Response {
 
     public async Task Send(HttpContext context, SeoM? seoM = null, int cacheControlInS = -1)
     {
-        seoM = (seoM == null && this.UIScheme!=null && this.UIScheme.title != null) ? new SeoM(Title: this.UIScheme.title, Description: this.UIScheme.description, Robot:this.UIScheme.robot) : null;
+        seoM = (seoM == null && this.UIScheme!=null && this.UIScheme.title != null) ? new SeoM(Title: this.UIScheme.title, Description: this.UIScheme.description, Robot:this.UIScheme.robot) : seoM;
 
         // Формируем HTML страницу
         var html = new StringBuilder();

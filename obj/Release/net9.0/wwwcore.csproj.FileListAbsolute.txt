@@ -11,3 +11,16 @@
 /Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Release/net9.0/refint/wwwcore.dll
 /Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Release/net9.0/wwwcore.pdb
 /Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/Release/net9.0/ref/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/bin/Release/net9.0/wwwcore.deps.json
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/bin/Release/net9.0/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/bin/Release/net9.0/wwwcore.pdb
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.csproj.AssemblyReference.cache
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.GeneratedMSBuildEditorConfig.editorconfig
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.AssemblyInfoInputs.cache
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.AssemblyInfo.cs
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.csproj.CoreCompileInputs.cache
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.sourcelink.json
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/refint/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/wwwcore.pdb
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/ref/wwwcore.dll

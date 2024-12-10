@@ -71,38 +71,33 @@ modules - List of paths to components that will be called by the script.js of pa
 Code example:
 
 ```
-var isDebug = true;
-
-if (!app.Environment.IsDevelopment())
-{
-    isDebug = false;
-    ...
-}
-
+var isDebug = builder.Environment.IsDevelopment();
 ...
 
-var www = new Root(new ConfigM(
-    IsDebug: isDebug,
-    Url: https://localhost:1234,
-    Name: "My Awesome App",
-    NameShort: "AwesomeApp",
-    Description: "A great app for managing your tasks.",
-    CacheControlInSDefault: 60 * 60 * 3,
-    PreconnectUrls: new List<string>() { "api.example.com", "api1.example.com", "api2.example.com" },
-    GoogleFontsUrl: "https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap",
-    GoogleAnalyticsCode: "G-2233KK44LS",
-    YandexMetrikaCode: "88888888"
+builder.Services.AddSingleton<Root>(sp => new Root(
+    var www = new Root(new ConfigM(
+        IsDebug: isDebug,
+        Url: https://localhost:1234,
+        Name: "My Awesome App",
+        NameShort: "AwesomeApp",
+        Description: "A great app for managing your tasks.",
+        CacheControlInSDefault: 60 * 60 * 3,
+        PreconnectUrls: new List<string>() { "api.example.com", "api1.example.com", "api2.example.com" },
+        GoogleFontsUrl: "https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap",
+        GoogleAnalyticsCode: "G-2233KK44LS",
+        YandexMetrikaCode: "88888888"
+    ), sp.GetRequiredService<ILoggerFactory>()
 ));
 
-app.MapGet("/", async (context) => { await www.SendAsync(context, "i"); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/a/{urlShort}", async (HttpContext context, IHttpClientFactory httpClientFactory) => { await www.SendAsync(context, "i", await i_seo(context, httpClientFactory)); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/bookmarks", async (context) => { await www.SendAsync(context, "bookmarks"); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/error", async (context) => { await www.SendAsync(context, "Error"); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/i/{search}", async (HttpContext context, IHttpClientFactory httpClientFactory) => { await www.SendAsync(context, "i", await i_seo(context, httpClientFactory)); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/locs", async (context) => { await www.SendAsync(context, "Locs"); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/settings", async (context) => { await www.SendAsync(context, "Settings"); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/u/{login-search}", async (HttpContext context, IHttpClientFactory httpClientFactory) => { await www.SendAsync(context, "u", await u_seo(context, httpClientFactory)); }).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/users", async (context) => { await www.SendAsync(context, "users"); }).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/", async (HttpContext context, Root www) => await www.SendAsync(context, "i")).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/a/{urlShort}", async (HttpContext context, Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync(context, "i", await i_seo(context, httpClientFactory, memoryCache))).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/bookmarks", async (HttpContext context, Root www) => await www.SendAsync(context, "bookmarks")).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/error", async (HttpContext context, Root www) => await www.SendAsync(context, "Error")).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/i/{search}", async (HttpContext context, Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync(context, "i", await i_seo(context, httpClientFactory, memoryCache))).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/locs", async (HttpContext context, Root www) => await www.SendAsync(context, "Locs")).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/settings", async (HttpContext context, Root www) => await www.SendAsync(context, "Settings")).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/u/{login-search}", async (HttpContext context, Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync(context, "u", await u_seo(context, httpClientFactory, memoryCache))).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/users", async (HttpContext context, Root www) => await www.SendAsync(context, "users")).CacheOutput(ThreeHOutputCachePolicy);
 
 ```
 

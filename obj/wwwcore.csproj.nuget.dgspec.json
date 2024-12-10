@@ -1,26 +1,25 @@
 {
   "format": 1,
   "restore": {
-    "/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/wwwcore.csproj": {}
+    "/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/wwwcore.csproj": {}
   },
   "projects": {
-    "/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/wwwcore.csproj": {
-      "version": "3.0.0",
+    "/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/wwwcore.csproj": {
+      "version": "3.0.3",
       "restore": {
-        "projectUniqueName": "/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/wwwcore.csproj",
+        "projectUniqueName": "/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/wwwcore.csproj",
         "projectName": "Alga.wwwcore",
-        "projectPath": "/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/wwwcore.csproj",
-        "packagesPath": "/Users/aidargalimov/.nuget/packages/",
-        "outputPath": "/Users/aidargalimov/Library/Mobile Documents/com~apple~CloudDocs/Airat/Projects/Alga/wwwcore/wwwcore/obj/",
+        "projectPath": "/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/wwwcore.csproj",
+        "packagesPath": "/Users/airatgalimov/.nuget/packages/",
+        "outputPath": "/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/aidargalimov/.nuget/NuGet/NuGet.Config"
+          "/Users/airatgalimov/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
         ],
         "sources": {
-          "/usr/local/share/dotnet/library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -45,11 +44,19 @@
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
-            "Microsoft.AspNetCore.Http": {
+            "Microsoft.AspNetCore.Http.Abstractions": {
               "target": "Package",
-              "version": "[2.2.2, )"
+              "version": "[2.2.0, )"
             },
             "Microsoft.Extensions.Logging": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.Net.Http.Headers": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "System.Text.Encodings.Web": {
               "target": "Package",
               "version": "[9.0.0, )"
             }
