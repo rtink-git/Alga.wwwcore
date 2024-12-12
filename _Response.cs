@@ -10,9 +10,11 @@ class _Response {
 
     public _Response(ConfigM config, _UISchemes.M _UISchemes) { this.ConfigM = config; this.UIScheme = _UISchemes; }
 
-    public async Task Send(HttpContext context, SeoM? seoM = null, int cacheControlInS = -1)
-    {
-        seoM = (seoM == null && this.UIScheme!=null && this.UIScheme.title != null) ? new SeoM(Title: this.UIScheme.title, Description: this.UIScheme.description, Robot:this.UIScheme.robot) : seoM;
+    public async Task Send(HttpContext context, SeoM? seoM = null, int cacheControlInS = -1) {
+        if(seoM == null) {
+            var splcount = context.Request.Path.Value.Split('/').Count();
+            if(splcount == 2 && !string.IsNullOrEmpty(UIScheme.title)) seoM = new SeoM(Title: UIScheme.title, Url: $"{ConfigM.Url}{context.Request.Path.Value}",  Description: UIScheme.description);
+        }
 
         // Формируем HTML страницу
         var html = new StringBuilder();

@@ -179,7 +179,10 @@ class _UISchemes
     string PageHeadIcons()
     {
         var html = new StringBuilder();
-        foreach (var size in new[] { 32, 48, 64, 70, 120, 150, 152, 167, 180, 192, 310, 512 }) html.Append(IconLinkHtml(size));
+        foreach (var size in new[] { 32, 48, 64, 70, 120, 150, 152, 167, 180, 192, 310, 512 }) {
+            var rel = (size == 120 || size == 152 || size == 167 || size == 180) ? "apple-touch-icon" : "icon";
+            html.Append(IconLinkHtml(size, rel));
+        }
         return html.ToString();
     }
 
@@ -202,7 +205,6 @@ class _UISchemes
     string LinkHtml(string url) => $"<link rel=\"stylesheet\" href=\"{url}\" type=\"text/css\" />";
     string ScriptHtml(string url, bool isUIS=false) => "<script " + ((isUIS) ? "type=\"module\"" : "") + " src=\"" + url + "\" type=\"text/javascript\"></script>";
     string IconLinkHtml(int size, string rel = "icon") => $"<link rel=\"{rel}\" href=\"/Modules/Total/content/Icon-{size}.png\" sizes=\"{size}x{size}\" type=\"image/png\">";
-
     record class SchemeJsonM (
         string? title = null,
         string? description = null,

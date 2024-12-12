@@ -12,8 +12,9 @@ namespace Alga.wwwcore;
 /// <param name="ImageUrl">The URL of an image to use for social media previews.</param>
 public record SeoM (
     string Title, 
+    string Url,
     string? Description = null, 
-    string? Robot = null, string? 
+    string? Robot = null, string?
     UrlCanonical = null, string? 
     ImageUrl = null
 ) {
@@ -40,7 +41,7 @@ public record SeoM (
         {
             html.Append($"<meta property=\"og:site_name\" content=\"{config.Name}\">");
             html.Append("<meta property=\"og:type\" content=\"article\">");
-            html.Append($"<meta property=\"og:url\" content=\"{config.Url}\">");
+            html.Append($"<meta property=\"og:url\" content=\"{Url}\">");
             html.Append($"<meta property=\"og:title\" content=\"{Title}\">");
             AddMetaTag(html, "og:description", Description);
             AddImageMetaTag(html, "og", ImageUrl, Title, config.Url);
@@ -76,10 +77,8 @@ public record SeoM (
     /// <param name="imageUrl"></param>
     /// <param name="title"></param>
     /// <param name="baseUrl"></param>
-    void AddImageMetaTag(StringBuilder html, string prefix, string? imageUrl, string title, string baseUrl = "")
-    {
-        if (!string.IsNullOrEmpty(imageUrl))
-        {
+    void AddImageMetaTag(StringBuilder html, string prefix, string? imageUrl, string title, string baseUrl = "") {
+        if (!string.IsNullOrEmpty(imageUrl)) {
             html.Append($"<meta property=\"{prefix}:image\" content=\"{baseUrl}{imageUrl}\">");
             html.Append($"<meta property=\"{prefix}:image:alt\" content=\"{title}\">");
         }
