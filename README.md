@@ -29,7 +29,7 @@ The Alga.wwwcore nuget package makes it easy to develop web applications in ASP.
 - Create "Components" dirictory (wwwroot/Modules)
 - - Create "Total" dirictory - is main component
 - - - Create "content" dirictory (wwwroot/Modules/Total/content) - this is where images and other files will be stored
-- - - - Add Icons: Icon-32.png (32x32px) + ("Icon-48.png" (48x48px), "Icon-64.png" (64x64px), "Icon-70.png" (70x70px), "Icon-120.png" (120x120px), "Icon-150.png" (150x150px), "Icon-152.png (152x152px), "Icon-167.png" (167x167px), "Icon-180.png" (180x180px), "Icon-192.png" (192x192px), "Icon-310.png" (310x310px), "Icon-512.png" (512x512px))
+- - - - Add Icons: Icon-32.png (32x32px) + ("Icon-180.png" (180x180px), "Icon-192.png" (192x192px), "Icon-512.png" (512x512px))
 - Create "UIRs" dirictory (wwwroot/UIRs) - For your Pages (UI Screens) - Required
 - - Create Page (UI Screen) directory {Index} (wwwroot/UIRs/Index)
 - - - Create file "script.js" (wwwroot/UIRs/Index/script.js) - Required. This is the file that will be called to build the page (UI Screen)
@@ -110,6 +110,13 @@ app.MapGet("/users", async (HttpContext context, Root www) => await www.SendAsyn
 A logging system with hints and error information was added to the project. Monitor them in the debug console.
 
 
+
+
+### Upates
+What has been changed compared to the previous version (3.0.4)
+
+- To improve SEO optimization, JSON-LD has been added to the header
+- Unnecessary icons have been removed
 
 
 

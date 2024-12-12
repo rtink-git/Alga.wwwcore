@@ -39,6 +39,8 @@ public record SeoM (
         // --- Open Graph meta tags ---
         if (!string.IsNullOrEmpty(config.Name))
         {
+            // <meta property="og:image" content="https://rt.ink/share-image.png">
+            // <meta property="og:locale" content="en_US">
             html.Append($"<meta property=\"og:site_name\" content=\"{config.Name}\">");
             html.Append("<meta property=\"og:type\" content=\"article\">");
             html.Append($"<meta property=\"og:url\" content=\"{Url}\">");
@@ -57,6 +59,8 @@ public record SeoM (
             AddMetaTag(html, "twitter:description", Description);
             AddImageMetaTag(html, "twitter", ImageUrl, Title);
         }
+
+        AddLdJson(html, Title, Url, Description);
 
         return html.ToString();
     }
@@ -81,6 +85,19 @@ public record SeoM (
         if (!string.IsNullOrEmpty(imageUrl)) {
             html.Append($"<meta property=\"{prefix}:image\" content=\"{baseUrl}{imageUrl}\">");
             html.Append($"<meta property=\"{prefix}:image:alt\" content=\"{title}\">");
+        }
+    }
+
+    void AddLdJson(StringBuilder html, string name, string url, string? description) {
+        if(!string.IsNullOrEmpty(name) && !string.IsNullOrEmpty(url)) {
+            html.Append("<script type=\"application/ld+json\">{");
+            html.Append("\"@context\": \"https://schema.org\",");
+            html.Append("\"@type\": \"WebPage\",");
+            html.Append("\"@name\": \"" + name + "\",");
+            if(!string.IsNullOrEmpty(description))
+                html.Append("\"@description\": \"" + description + "\",");
+            html.Append("\"@url\": \"" + url + "\"");
+            html.Append("}</script>");
         }
     }
 };
