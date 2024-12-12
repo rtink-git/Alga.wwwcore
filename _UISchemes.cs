@@ -154,7 +154,7 @@ class _UISchemes
 
         head.Append(this.ConfigM.PreconnectUrls != null ? string.Join(string.Empty, this.ConfigM.PreconnectUrls.Select(url => PreconnectLink(url))) : string.Empty)
         .Append(PageHeadGoogleFontPreconects())
-        .Append(this.ConfigM.GoogleFontsUrl != null ? $"<link href=\"{this.ConfigM.GoogleFontsUrl}\" rel=\"stylesheet\">" : null)
+        .Append(this.ConfigM.GoogleFontsUrl != null ? $"<link rel=\"preload\" href=\"{this.ConfigM.GoogleFontsUrl}\" as=\"style\" onload=\"this.rel='stylesheet'\">" : null)
         .Append(links)
         .Append(PageHeadIcons())
         .Append("<link rel=\"manifest\" href=\"/manifest.json\" />")

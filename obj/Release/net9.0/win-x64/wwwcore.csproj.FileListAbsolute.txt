@@ -1,0 +1,13 @@
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/bin/Release/net9.0/win-x64/wwwcore.deps.json
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/bin/Release/net9.0/win-x64/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/bin/Release/net9.0/win-x64/wwwcore.pdb
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.csproj.AssemblyReference.cache
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.GeneratedMSBuildEditorConfig.editorconfig
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.AssemblyInfoInputs.cache
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.AssemblyInfo.cs
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.csproj.CoreCompileInputs.cache
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.sourcelink.json
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/refint/wwwcore.dll
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/wwwcore.pdb
+/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/obj/Release/net9.0/win-x64/ref/wwwcore.dll

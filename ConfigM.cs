@@ -1,3 +1,5 @@
+using System.Dynamic;
+
 namespace Alga.wwwcore;
 
 /// <summary>
@@ -16,18 +18,18 @@ namespace Alga.wwwcore;
 /// <param name="TwitterSite">The Twitter account handle associated with the application. Example: "@ElonMusk". This can be used for social media links or integrations.</param>
 /// <param name="BackgroundColor">The background color used when the application loads. This is particularly important for Progressive Web Apps (PWA) to show a consistent color while the app is loading. Example: "#FFFFFF" for white or "#000000" for black.</param>
 /// <param name="ThemeColor">The theme color used for the application's interface and visual elements. This can influence the color of the browser's address bar and other UI elements, particularly in mobile web apps and PWAs. Example: "#FFFFFF" for white or "#000000" for black.</param>
-public record ConfigM (
-    bool IsDebug,
-    string Url,
-    string Name,
-    string NameShort,
-    string Description,
-    int CacheControlInSDefault = -1,
-    List<string>? PreconnectUrls = null,
-    string? GoogleFontsUrl = null,
-    string? GoogleAnalyticsCode = null,
-    string? YandexMetrikaCode = null,
-    string? TwitterSite = null,
-    string BackgroundColor = "#FFFFFF",
-    string ThemeColor = "#FFFFFF"
-);
+public class ConfigM {
+    public bool IsDebug {get; set;}
+    public string Url {get; set;} = string.Empty;
+    public string Name {get; set;} = string.Empty;
+    public string NameShort {get; set;} = string.Empty;
+    public string Description {get; set;} = string.Empty;
+    public int CacheControlInSDefault  {get; set;}
+    public List<string>? PreconnectUrls  {get; set;}
+    public string? GoogleFontsUrl  {get; set;}
+    public string? GoogleAnalyticsCode  {get; set;}
+    public string? YandexMetrikaCode  {get; set;}
+    public string? TwitterSite  {get; set;}
+    public string BackgroundColor  {get; set;} = "#FFFFFF";
+    public string ThemeColor  {get; set;} = "#FFFFFF";
+};

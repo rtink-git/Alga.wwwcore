@@ -76,8 +76,6 @@ var isDebug = builder.Environment.IsDevelopment();
 
 builder.Services.AddSingleton<Root>(sp => new Root(
     var www = new Root(new ConfigM(
-        IsDebug: isDebug,
-        Url: https://localhost:1234,
         Name: "My Awesome App",
         NameShort: "AwesomeApp",
         Description: "A great app for managing your tasks.",
@@ -89,15 +87,15 @@ builder.Services.AddSingleton<Root>(sp => new Root(
     ), sp.GetRequiredService<ILoggerFactory>()
 ));
 
-app.MapGet("/", async (HttpContext context, Root www) => await www.SendAsync(context, "i")).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/a/{urlShort}", async (HttpContext context, Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync(context, "i", await i_seo(context, httpClientFactory, memoryCache))).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/bookmarks", async (HttpContext context, Root www) => await www.SendAsync(context, "bookmarks")).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/error", async (HttpContext context, Root www) => await www.SendAsync(context, "Error")).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/i/{search}", async (HttpContext context, Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync(context, "i", await i_seo(context, httpClientFactory, memoryCache))).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/locs", async (HttpContext context, Root www) => await www.SendAsync(context, "Locs")).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/settings", async (HttpContext context, Root www) => await www.SendAsync(context, "Settings")).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/u/{login-search}", async (HttpContext context, Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync(context, "u", await u_seo(context, httpClientFactory, memoryCache))).CacheOutput(ThreeHOutputCachePolicy);
-app.MapGet("/users", async (HttpContext context, Root www) => await www.SendAsync(context, "users")).CacheOutput(ThreeHOutputCachePolicy);
+app.MapGet("/", async (Root www) => await www.SendAsync("i"));
+app.MapGet("/a/{urlShort}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("i", await i_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
+app.MapGet("/bookmarks", async (Root www) => await www.SendAsync("bookmarks"));
+app.MapGet("/error", async (Root www) => await www.SendAsync("Error"));
+app.MapGet("/i/{search}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("i", await i_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
+app.MapGet("/locs", async (Root www) => await www.SendAsync("Locs"));
+app.MapGet("/settings", async (Root www) => await www.SendAsync("Settings"));
+app.MapGet("/u/{login-search}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("u", await u_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
+app.MapGet("/users", async (Root www) => await www.SendAsync("users"));
 
 ```
 
@@ -113,11 +111,12 @@ A logging system with hints and error information was added to the project. Moni
 
 
 ### Upates
-What has been changed compared to the previous version (3.0.4)
+What has been changed compared to the previous version (3.0.5)
 
-- To improve SEO optimization, JSON-LD has been added to the header
-- Unnecessary icons have been removed
-
+- Blocking the loading of Google Fonts when building the DOM has been optimized
+- The explicit definition of Dev Mode (IsDebug) from ConfigM has been removed
+- The explicit definition of Url (base) from ConfigM has been removed.
+- An HttpContext implementation has been added to AddSingleton<Root> to simplify the implementation of requests
 
 
 ## ASP.NET Core Project

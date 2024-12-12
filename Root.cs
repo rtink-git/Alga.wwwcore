@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Net.Http.Headers;
 
 namespace Alga.wwwcore;
 
@@ -12,6 +13,7 @@ public class Root
     /// The configuration manager used to retrieve App configuration.
     /// </summary>
     readonly ConfigM ConfigM;
+    public readonly IHttpContextAccessor HttpContextAccessor;
     readonly ILogger? logger;
     /// <summary>
     /// A list of User Interface Screens schemes used for rendering views.
@@ -23,8 +25,11 @@ public class Root
     /// </summary>
     /// <param name="config">A configuration object containing general App settings.</param>
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="config"/> is null.</exception>
-    public Root(ConfigM config, ILoggerFactory? loggerFactory = null) {
+    public Root(ConfigM config, IHttpContextAccessor httpContextAccessor, ILoggerFactory? loggerFactory = null) {
         this.ConfigM = config ?? throw new ArgumentNullException(nameof(config));
+        this.ConfigM.IsDebug = (httpContextAccessor.HttpContext.Request.Host.Host == "localhost") ? false : true;
+        this.ConfigM.Url = $"{httpContextAccessor.HttpContext.Request.Scheme}://{httpContextAccessor.HttpContext.Request.Host}";
+        HttpContextAccessor = httpContextAccessor;
         if(loggerFactory != null) logger = loggerFactory.CreateLogger<Root>();
         logger?.LogInformation("Started");
 
@@ -45,8 +50,9 @@ public class Root
     /// <param name="seoM">Optional SEO metadata to include in the response.</param>
     /// <param name="cacheControlInS">Optional cache control setting (in seconds). Default is -1, in them mens but better add cache control. The default cache control setting (in seconds) for the entire project can be set in the configuration when initializing the class.</param>
     /// <returns>A task that represents the asynchronous operation.</returns>
-    public async Task SendAsync(HttpContext context, string UISName, SeoM? seoM = null, int cacheControlInS = -1) {
+    public async Task SendAsync(string UISName, SeoM? seoM = null, int cacheControlInS = -1) {
         var UIScheme = UISchemes.FirstOrDefault(i => i.UISName == UISName);
-        if(UIScheme != null) await new _Response(ConfigM, UIScheme).Send(context, seoM, cacheControlInS);
+        var context = HttpContextAccessor.HttpContext;
+        if(UIScheme != null && context != null) await new _Response(ConfigM, UIScheme).Send(context, seoM, cacheControlInS);
     }
 }
