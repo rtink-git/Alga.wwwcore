@@ -84,7 +84,7 @@ builder.Services.AddSingleton<Root>(sp => new Root(
         GoogleFontsUrl: "https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap",
         GoogleAnalyticsCode: "G-2233KK44LS",
         YandexMetrikaCode: "88888888"
-    ), sp.GetRequiredService<ILoggerFactory>()
+    }, sp.GetRequiredService<IHttpContextAccessor>(), sp.GetRequiredService<ILoggerFactory>()
 ));
 
 app.MapGet("/", async (Root www) => await www.SendAsync("i"));
@@ -111,12 +111,12 @@ A logging system with hints and error information was added to the project. Moni
 
 
 ### Upates
-What has been changed compared to the previous version (3.0.5)
+What has been changed compared to the previous version (3.0.6)
 
-- Blocking the loading of Google Fonts when building the DOM has been optimized
-- The explicit definition of Dev Mode (IsDebug) from ConfigM has been removed
-- The explicit definition of Url (base) from ConfigM has been removed.
-- An HttpContext implementation has been added to AddSingleton<Root> to simplify the implementation of requests
+- An issue with derermining the debug status ode has been fixed
+- Overriding manifiest.json every ttime you copile in debug mode
+- Automtic creation app. js
+- Automtic creation serviceworker.js
 
 
 ## ASP.NET Core Project

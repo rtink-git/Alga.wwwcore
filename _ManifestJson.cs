@@ -17,6 +17,7 @@ class _ManifestJson
         };
 
         var url = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "manifest.json");
+        if(File.Exists(url)) File.Delete(url);
         using(FileStream createStream = File.Create(url)) { JsonSerializer.Serialize(createStream, manifestModel); }
     }
 

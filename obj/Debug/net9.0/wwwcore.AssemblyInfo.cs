@@ -12,11 +12,11 @@ using System.Reflection;
 
 [assembly: System.Reflection.AssemblyCompanyAttribute("wwwcore")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("3.0.6.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("3.0.6+636eaf341c47881adaff9ed60c011d9842e04078")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("3.1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("3.1.0+4cfb0c4489f9d84ac4fb10707a4231c69e22bd08")]
 [assembly: System.Reflection.AssemblyProductAttribute("wwwcore")]
 [assembly: System.Reflection.AssemblyTitleAttribute("wwwcore")]
-[assembly: System.Reflection.AssemblyVersionAttribute("3.0.6.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("3.1.0.0")]
 [assembly: System.Reflection.AssemblyMetadataAttribute("RepositoryUrl", "https://github.com/rtink-git/Alga.wwwcore")]
 
 // Создано классом WriteCodeFragment MSBuild.

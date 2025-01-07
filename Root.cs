@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Net.Http.Headers;
+using wwwcore;
 
 namespace Alga.wwwcore;
 
@@ -27,7 +28,7 @@ public class Root
     /// <exception cref="ArgumentNullException">Thrown when <paramref name="config"/> is null.</exception>
     public Root(ConfigM config, IHttpContextAccessor httpContextAccessor, ILoggerFactory? loggerFactory = null) {
         this.ConfigM = config ?? throw new ArgumentNullException(nameof(config));
-        this.ConfigM.IsDebug = (httpContextAccessor.HttpContext.Request.Host.Host == "localhost") ? false : true;
+        this.ConfigM.IsDebug = (httpContextAccessor.HttpContext.Request.Host.Host == "localhost") ? true : false;
         this.ConfigM.Url = $"{httpContextAccessor.HttpContext.Request.Scheme}://{httpContextAccessor.HttpContext.Request.Host}";
         HttpContextAccessor = httpContextAccessor;
         if(loggerFactory != null) logger = loggerFactory.CreateLogger<Root>();
@@ -39,6 +40,8 @@ public class Root
         if(this.ConfigM.IsDebug) {
             new _BundleconfigJson(this.UISchemes).Build();
             new _ManifestJson(this.ConfigM).Build();
+            new _AppJs().Create();
+            new _ServiceworkerJs().Create();
         }
     }
 
