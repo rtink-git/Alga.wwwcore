@@ -19,8 +19,8 @@ namespace Alga.wwwcore;
 /// <param name="BackgroundColor">The background color used when the application loads. This is particularly important for Progressive Web Apps (PWA) to show a consistent color while the app is loading. Example: "#FFFFFF" for white or "#000000" for black.</param>
 /// <param name="ThemeColor">The theme color used for the application's interface and visual elements. This can influence the color of the browser's address bar and other UI elements, particularly in mobile web apps and PWAs. Example: "#FFFFFF" for white or "#000000" for black.</param>
 public class ConfigM {
-    public bool IsDebug {get; set;}
-    public string Url {get; set;} = string.Empty;
+    internal bool IsDebug {get; set;}
+    internal string Url {get; set;} = string.Empty;
     public string Name {get; set;} = string.Empty;
     public string NameShort {get; set;} = string.Empty;
     public string Description {get; set;} = string.Empty;

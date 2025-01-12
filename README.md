@@ -71,7 +71,7 @@ modules - List of paths to components that will be called by the script.js of pa
 Code example:
 
 ```
-var isDebug = builder.Environment.IsDevelopment();
+builder.Services.AddHttpContextAccessor();
 ...
 
 builder.Services.AddSingleton<Root>(sp => new Root(
@@ -111,12 +111,11 @@ A logging system with hints and error information was added to the project. Moni
 
 
 ### Upates
-What has been changed compared to the previous version (3.0.6)
+What has been changed compared to the previous version (3.1.0)
 
-- An issue with derermining the debug status ode has been fixed
-- Overriding manifiest.json every ttime you copile in debug mode
-- Automtic creation app. js
-- Automtic creation serviceworker.js
+- Fixed Debug Mode detection error
+- The Config: IsDebug and Url parameters are hidden because they are determined automatically
+- Documentation updated
 
 
 ## ASP.NET Core Project
