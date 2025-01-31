@@ -7,7 +7,7 @@
   "targets": {
     ".NETCoreApp,Version=v9.0": {},
     ".NETCoreApp,Version=v9.0/win-x64": {
-      "wwwcore/3.0.5": {
+      "wwwcore/3.2.1": {
         "dependencies": {
           "Microsoft.AspNetCore.Http.Abstractions": "2.2.0",
           "Microsoft.Extensions.Logging": "9.0.0",
@@ -119,7 +119,7 @@
     }
   },
   "libraries": {
-    "wwwcore/3.0.5": {
+    "wwwcore/3.2.1": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

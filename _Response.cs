@@ -11,14 +11,21 @@ class _Response {
     public _Response(ConfigM config, _UISchemes.M _UISchemes) { this.ConfigM = config; this.UIScheme = _UISchemes; }
 
     public async Task Send(HttpContext context, SeoM? seoM = null, int cacheControlInS = -1) {
+        var lang = ConfigM.Lang;
         if(seoM == null) {
             var splcount = context.Request.Path.Value.Split('/').Count();
             if(splcount == 2 && !string.IsNullOrEmpty(UIScheme.title)) seoM = new SeoM(Title: UIScheme.title, Url: $"{ConfigM.Url}{context.Request.Path.Value}",  Description: UIScheme.description);
         }
+        else if(!string.IsNullOrEmpty(seoM?.Lang))
+            lang = seoM.Lang;
+
+        var langStr = "";
+        if(!string.IsNullOrEmpty(lang))
+            langStr = $"lang=\"{lang}\"";
 
         // Формируем HTML страницу
         var html = new StringBuilder();
-        html.Append("<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />")
+        html.Append($"<!DOCTYPE><html {langStr}><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />")
             .Append(seoM?.MergeTags(this.ConfigM) ?? string.Empty)
             .Append(UIScheme?.Head ?? string.Empty)
             .Append("</head><body>")

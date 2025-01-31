@@ -507,7 +507,7 @@
     "/Users/airatgalimov/.nuget/packages/": {}
   },
   "project": {
-    "version": "3.1.1",
+    "version": "3.2.2",
     "restore": {
       "projectUniqueName": "/Users/airatgalimov/Documents/Airat/Projects/Alga/Alga.wwwcore/wwwcore.csproj",
       "projectName": "Alga.wwwcore",

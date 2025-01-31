@@ -24,12 +24,13 @@ public class ConfigM {
     public string Name {get; set;} = string.Empty;
     public string NameShort {get; set;} = string.Empty;
     public string Description {get; set;} = string.Empty;
-    public int CacheControlInSDefault  {get; set;}
-    public List<string>? PreconnectUrls  {get; set;}
-    public string? GoogleFontsUrl  {get; set;}
-    public string? GoogleAnalyticsCode  {get; set;}
-    public string? YandexMetrikaCode  {get; set;}
-    public string? TwitterSite  {get; set;}
-    public string BackgroundColor  {get; set;} = "#FFFFFF";
-    public string ThemeColor  {get; set;} = "#FFFFFF";
+    public int CacheControlInSDefault {get; set;}
+    public List<string>? PreconnectUrls {get; set;}
+    public string? GoogleFontsUrl {get; set;}
+    public string? GoogleAnalyticsCode {get; set;}
+    public string? YandexMetrikaCode {get; set;}
+    public string? TwitterSite {get; set;}
+    public string BackgroundColor {get; set;} = "#FFFFFF";
+    public string ThemeColor {get; set;} = "#FFFFFF";
+    public string Lang {get; set;} = "";
 };

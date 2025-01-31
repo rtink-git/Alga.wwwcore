@@ -83,18 +83,21 @@ builder.Services.AddSingleton<Root>(sp => new Root(
         PreconnectUrls: new List<string>() { "api.example.com", "api1.example.com", "api2.example.com" },
         GoogleFontsUrl: "https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap",
         GoogleAnalyticsCode: "G-2233KK44LS",
-        YandexMetrikaCode: "88888888"
+        YandexMetrikaCode: "88888888",
+        BackgroundColor = "#282929",
+        ThemeColor = "#282929",
+        Lang = "en-US"
     }, sp.GetRequiredService<IHttpContextAccessor>(), sp.GetRequiredService<ILoggerFactory>()
 ));
 
 app.MapGet("/", async (Root www) => await www.SendAsync("i"));
-app.MapGet("/a/{urlShort}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("i", await i_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
+app.MapGet("/a/{urlShort}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("i"));
 app.MapGet("/bookmarks", async (Root www) => await www.SendAsync("bookmarks"));
 app.MapGet("/error", async (Root www) => await www.SendAsync("Error"));
 app.MapGet("/i/{search}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("i", await i_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
 app.MapGet("/locs", async (Root www) => await www.SendAsync("Locs"));
 app.MapGet("/settings", async (Root www) => await www.SendAsync("Settings"));
-app.MapGet("/u/{login-search}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("u", await u_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
+app.MapGet("/u/{login-search}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("u", new SeoM(Title: "User: X", Url: "https://rt.ink/u/rus", Description: "Main page", Lang: "ru-RU")));
 app.MapGet("/users", async (Root www) => await www.SendAsync("users"));
 
 ```
@@ -111,12 +114,10 @@ A logging system with hints and error information was added to the project. Moni
 
 
 ### Upates
-What has been changed compared to the previous version (3.1.0)
+What has been changed compared to the previous version (3.2.1)
 
-- Fixed Debug Mode detection error
-- The Config: IsDebug and Url parameters are hidden because they are determined automatically
-- Documentation updated
-
+- Fixed setting of SEO parameter image url. You can set the full url or part of url (we ourselves will combine it into a complete)
+- Added new parameters for better performance with SEO
 
 ## ASP.NET Core Project
 
