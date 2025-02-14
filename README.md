@@ -29,7 +29,8 @@ The Alga.wwwcore nuget package makes it easy to develop web applications in ASP.
 - Create "Components" dirictory (wwwroot/Modules)
 - - Create "Total" dirictory - is main component
 - - - Create "content" dirictory (wwwroot/Modules/Total/content) - this is where images and other files will be stored
-- - - - Add Icons: Icon-32.png (32x32px) + ("Icon-180.png" (180x180px), "Icon-192.png" (192x192px), "Icon-512.png" (512x512px))
+- - - - Add Icons: Icon-32.png (32x32px), "Icon-180.png" (180x180px), "Icon-192.png" (192x192px), "Icon-512.png" (512x512px)
+- - - - Add screenshots: screenshot-vertical.png (1080x1920px), screenshot-horizontal.png (1920x1080px)
 - Create "UIRs" dirictory (wwwroot/UIRs) - For your Pages (UI Screens) - Required
 - - Create Page (UI Screen) directory {Index} (wwwroot/UIRs/Index)
 - - - Create file "script.js" (wwwroot/UIRs/Index/script.js) - Required. This is the file that will be called to build the page (UI Screen)
@@ -114,10 +115,9 @@ A logging system with hints and error information was added to the project. Moni
 
 
 ### Upates
-What has been changed compared to the previous version (3.2.1)
+What has been changed in new build (3.2.3) compared to the previous version (3.2.2)
 
-- Fixed setting of SEO parameter image url. You can set the full url or part of url (we ourselves will combine it into a complete)
-- Added new parameters for better performance with SEO
+- Now you can add vertical and gorizontal screenshots for PWA manifiest
 
 ## ASP.NET Core Project
 

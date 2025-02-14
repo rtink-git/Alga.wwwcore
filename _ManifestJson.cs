@@ -36,7 +36,13 @@ class _ManifestJson
             new IconM("/Modules/Total/content/Icon-192.png", "image/png", "192x192"),
             new IconM("/Modules/Total/content/Icon-512.png", "image/png", "512x512")
         };
+        public List<ScreenshotM> screenshots { get; set; } = new List<ScreenshotM>
+        {
+            new ScreenshotM("/Modules/Total/content/screenshot-vertical.png", "image/png", "1080x1920", "any", "portrait"),
+            new ScreenshotM("/Modules/Total/content/screenshot-horizontal.png", "image/png", "1920x1080", "any", "landscape")
+        };
     }
 
     record IconM ( string src, string type, string sizes );
+    record ScreenshotM ( string src, string type, string sizes, string platform, string orientation );
 }
