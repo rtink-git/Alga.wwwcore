@@ -117,7 +117,7 @@ A logging system with hints and error information was added to the project. Moni
 ### Upates
 What has been changed in new build (3.2.3) compared to the previous version (3.2.2)
 
-- Now you can add vertical and gorizontal screenshots for PWA manifiest
+- Now you can add vertical and horizontal screenshots for PWA manifest
 
 ## ASP.NET Core Project
 

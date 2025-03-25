@@ -13,7 +13,15 @@ class _ManifestJson
             short_name = this._ConfigM.NameShort,
             description = this._ConfigM.Description,
             background_color = this._ConfigM.BackgroundColor,
-            theme_color = this._ConfigM.ThemeColor
+            theme_color = this._ConfigM.ThemeColor,
+            icons = new List<IconM> {
+                new IconM("/Modules/Total/content/Icon-192.png", "image/png", "192x192"),
+                new IconM("/Modules/Total/content/Icon-512.png", "image/png", "512x512")
+            },
+            screenshots = new List<ScreenshotM> {
+                new ScreenshotM("/Modules/Total/content/screenshot-vertical.png", "image/png", "1080x1920", "any", "portrait"),
+                new ScreenshotM("/Modules/Total/content/screenshot-horizontal.png", "image/png", "1920x1080", "any", "landscape")
+            }
         };
 
         var url = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "manifest.json");
@@ -31,16 +39,8 @@ class _ManifestJson
         public string description { get; set; } = "";
         public string background_color { get; set; } = "#FFFFFF";
         public string theme_color { get; set; } = "#FFFFFF";
-        public List<IconM> icons { get; set; } = new List<IconM>
-        {
-            new IconM("/Modules/Total/content/Icon-192.png", "image/png", "192x192"),
-            new IconM("/Modules/Total/content/Icon-512.png", "image/png", "512x512")
-        };
-        public List<ScreenshotM> screenshots { get; set; } = new List<ScreenshotM>
-        {
-            new ScreenshotM("/Modules/Total/content/screenshot-vertical.png", "image/png", "1080x1920", "any", "portrait"),
-            new ScreenshotM("/Modules/Total/content/screenshot-horizontal.png", "image/png", "1920x1080", "any", "landscape")
-        };
+        public List<IconM>? icons { get; set; }
+        public List<ScreenshotM>? screenshots { get; set; }
     }
 
     record IconM ( string src, string type, string sizes );

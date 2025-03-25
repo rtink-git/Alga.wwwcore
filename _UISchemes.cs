@@ -154,10 +154,10 @@ class _UISchemes
 
         head.Append(this.ConfigM.PreconnectUrls != null ? string.Join(string.Empty, this.ConfigM.PreconnectUrls.Select(url => PreconnectLink(url))) : string.Empty)
         .Append(PageHeadGoogleFontPreconects())
-        .Append(this.ConfigM.GoogleFontsUrl != null ? $"<link rel=\"preload\" href=\"{this.ConfigM.GoogleFontsUrl}\" as=\"style\" onload=\"this.rel='stylesheet'\">" : null)
+        .Append(this.ConfigM.GoogleFontsUrl != null ? $"<link rel=\"stylesheet\" href=\"{this.ConfigM.GoogleFontsUrl}\" media=\"print\" onload=\"this.media='all'\"><noscript><link href=\"{this.ConfigM.GoogleFontsUrl}\" rel=\"stylesheet\"></noscript>" : null) //$"<link rel=\"preload\" href=\"{this.ConfigM.GoogleFontsUrl}\" as=\"style\" onload=\"this.rel='stylesheet'\">" : null
         .Append(links)
         .Append(PageHeadIcons())
-        .Append("<link rel=\"manifest\" href=\"/manifest.json\" />")
+        .Append("<link rel=\"manifest\" href=\"/manifest.json\"/>")
         .Append(PageHeadAsyncScriptsAndAnalitys())
         .Append(scripts)
         .Append(ScriptHtml($"/UISs/{name}/{nameJs}" + (this.ConfigM.IsDebug ? string.Empty : ".min") + ".js", true));
@@ -168,7 +168,7 @@ class _UISchemes
         .Append(PageYandexMetrikaScripts());
     }
 
-    string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + ((isCrossorigin) ? "crossorigin" : "") + " />";
+    string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + ((isCrossorigin) ? "crossorigin" : "") + "/>";
 
     string PageHeadGoogleFontPreconects()
     {
@@ -199,11 +199,11 @@ class _UISchemes
 
         return "<script async src=\"https://mc.yandex.ru/metrika/tag.js\"></script>" +
                $"<script type=\"text/javascript\">(function(m,e,t,r,i,k,a){{m[i]=m[i]||function(){{(m[i].a=m[i].a||[]).push(arguments);}};m[i].l=1*new Date();for (var j = 0; j < document.scripts.length; j++) {{if (document.scripts[j].src === r) {{ return; }}}} k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)}})(window, document, \"script\", \"https://mc.yandex.ru/metrika/tag.js\", \"ym\");ym({this.ConfigM.YandexMetrikaCode}, \"init\", {{ clickmap:true, trackLinks:true, accurateTrackBounce:true }});</script>" +
-               $"<noscript><div><img src=\"https://mc.yandex.ru/watch/{this.ConfigM.YandexMetrikaCode}\" style=\"position:absolute; left:-9999px;\" alt=\"\" /></div></noscript>";
+               $"<noscript><div><img src=\"https://mc.yandex.ru/watch/{this.ConfigM.YandexMetrikaCode}\" style=\"position:absolute; left:-9999px;\" alt=\"\"/></div></noscript>";
     }
 
-    string LinkHtml(string url) => $"<link rel=\"stylesheet\" href=\"{url}\" type=\"text/css\" />";
-    string ScriptHtml(string url, bool isUIS=false) => "<script " + ((isUIS) ? "type=\"module\"" : "") + " src=\"" + url + "\" type=\"text/javascript\"></script>";
+    string LinkHtml(string url) => $"<link rel=\"stylesheet\" href=\"{url}\" type=\"text/css\"/>";
+    string ScriptHtml(string url, bool isUIS=false) => "<script " + ((isUIS) ? "type=\"module\"" : "type=\"text/javascript\"") + " src=\"" + url + "\"></script>";
     string IconLinkHtml(int size, string rel = "icon") => $"<link rel=\"{rel}\" href=\"/Modules/Total/content/Icon-{size}.png\" sizes=\"{size}x{size}\" type=\"image/png\" alt=\"RT.ink Icon\">";
     record class SchemeJsonM (
         string? title = null,
