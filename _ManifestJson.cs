@@ -4,8 +4,8 @@ namespace Alga.wwwcore;
 
 class _ManifestJson
 {
-    ConfigM _ConfigM { get; }
-    internal _ManifestJson(ConfigM config) => this._ConfigM = config;
+    Root.ConfigModel _ConfigM { get; }
+    internal _ManifestJson(Root.ConfigModel config) => this._ConfigM = config;
 
     internal void Build() {
         var manifestModel = new ManifestM {

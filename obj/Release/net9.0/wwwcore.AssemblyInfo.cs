@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("wwwcore")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("3.2.3.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("3.2.3+22cd8047ce597be4aea6737294aa969b9c31b503")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("3.2.3+5d8bfcb60fc931064d21217877634fdff5986650")]
 [assembly: System.Reflection.AssemblyProductAttribute("wwwcore")]
 [assembly: System.Reflection.AssemblyTitleAttribute("wwwcore")]
 [assembly: System.Reflection.AssemblyVersionAttribute("3.2.3.0")]

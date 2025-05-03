@@ -48,6 +48,10 @@
               "target": "Package",
               "version": "[2.2.0, )"
             },
+            "Microsoft.Extensions.Caching.Memory": {
+              "target": "Package",
+              "version": "[9.0.3, )"
+            },
             "Microsoft.Extensions.Logging": {
               "target": "Package",
               "version": "[9.0.0, )"
@@ -55,6 +59,10 @@
             "Microsoft.Net.Http.Headers": {
               "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "NUglify": {
+              "target": "Package",
+              "version": "[1.21.15, )"
             },
             "System.Text.Encodings.Web": {
               "target": "Package",
@@ -78,11 +86,6 @@
             }
           },
           "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.100/PortableRuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "win-x64": {
-          "#import": []
         }
       }
     }
