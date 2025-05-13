@@ -15,6 +15,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include=".gitignore" />
     <Compile Include="readme.txt" />
   </ItemGroup>
 

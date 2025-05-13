@@ -173,9 +173,56 @@ robot - The <meta name="robots"> tag is an HTML element that provides instructio
 modules - List of paths to components that will be called by the script.js of page (UI Screen).This list also helps determine which components should be bundled & minify with script & css pages. If you do not want to specify the path to all files, specify the path to the directory and we will get the paths to javascript & css files
 
 
+
+
+
 ### Publication
 
 Terminal command: ```dotnet publish -c Release -r win-x64 --force```
+
+
+
+
+
+### Create Android APP (TWA) using Bubblewrap
+
+Install bubblewrap: ```npm install -g @bubblewrap/cli```
+
+```bubblewrap build --clean```
+
+```keytool -genkeypair -v \
+  -keystore "/Users/xxx/Documents/Mask/Projects/RtInkGit/android.keystore" \
+  -alias android \
+  -keyalg RSA -keysize 2048 \
+  -validity 10000 \
+  -storepass "YourPass" \
+  -keypass "YourPass"```
+
+```bubblewrap update \
+  --keystore=/Users/xxx/Documents/Mask/Projects/RtInkGit/android.keystore \
+  --ks-pass="pass:YourPass" \
+  --key-pass="pass:YourPass"```
+
+
+```bubblewrap update --keystore=./android.keystore```
+
+```bubblewrap init --manifest https://your_site.com/manifest.json```
+
+```bubblewrap build```
+
+bubblewrap validate
+
+curl -I https://rt.ink/manifest.json
+
+
+Do you want Bubblewrap to install the JDK: Y (Yes)
+
+Do you want Bubblewrap to install the Android SDK: Y (Yes)
+
+------- ink.rt.twa
+
+
+
 
 
 ### Logging
@@ -223,19 +270,56 @@ git: [https://github.com/rtink-git/RtInkGit](https://github.com/rtink-git/RtInkG
 
 ```
 
-// ANDROID APP using Bubblewrap
-
-npm install -g @bubblewrap/clipm install -g @bubblewrap/cli
-
-bubblewrap init --manifest https://exrtample.com/manifest.json
-
-bubblewrap validate
-
-curl -I https://rt.ink/manifest.json
 
 
-Do you want Bubblewrap to install the JDK: Y (Yes)
 
-Do you want Bubblewrap to install the Android SDK: Y (Yes)
 
-------- ink.rt.twa
+## Telegram mini app
+
+```
+// Формируем клавиатуру с кнопкой WebApp - в телеграм боте
+
+var requestData = new 
+{
+    chat_id = chatId,
+    text = "Нажмите кнопку, чтобы открыть Mini App!",
+    reply_markup = new
+    {
+        inline_keyboard = new[]
+        {
+            new[]
+            {
+                new
+                {
+                    text = "Open Mini App",
+                    web_app = new { url = webAppUrl }
+                }
+            }
+        }
+    }
+};
+```
+
+```
+// Формируем клавиатуру с кнопкой WebApp - канал
+
+var requestData = new 
+{
+    chat_id = chatId,
+    text = "Нажмите кнопку, чтобы открыть Mini App!",
+    reply_markup = new
+    {
+        inline_keyboard = new[]
+        {
+            new[]
+            {
+                new
+                {
+                    text = "Open Mini App",
+                    url = "https://t.me/your_bot?startapp"
+                }
+            }
+        }
+    }
+};
+```

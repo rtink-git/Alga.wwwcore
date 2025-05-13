@@ -31,7 +31,7 @@ public class Root {
         await schemes.Build();
         await new _Index(ConfigM, schemes.List, schemes.Modules, _Logger).Build();
         new _ManifestJson(this.ConfigM).Build();
-        new _AppJs().Create();
+        new _AppJs(ConfigM).Create();
         new _ServiceworkerJs().Build(ConfigM, schemes.List, schemes.Modules);
     }
 

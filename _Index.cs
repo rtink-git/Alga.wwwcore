@@ -43,8 +43,9 @@ public class _Index {
             .Append(PageHeadGoogleFontPreconects())
             .Append(IconLinkHtml(32, "icon") + IconLinkHtml(180, "apple-touch-icon"))
             .Append(_Config.GoogleFontsUrl != null ? $@"<link rel=""preload"" href=""{_Config.GoogleFontsUrl}"" as=""style""><link rel=""stylesheet"" href=""{_Config.GoogleFontsUrl}"" media=""print"" onload=""this.media='all'"">" : null)
-            .Append(PageHeadAsyncScriptsAndAnalitys() + PageYandexMetrikaScripts())
-            .Append(PageYandexMetrikaScripts());
+            //.Append(PageHeadAsyncScriptsAndAnalitys() + PageYandexMetrikaScripts())
+            //.Append(PageYandexMetrikaScripts())
+            .Append("<script src=\"https://telegram.org/js/telegram-web-app.js\"></script>");
 
             // Scripts & Styles
 
