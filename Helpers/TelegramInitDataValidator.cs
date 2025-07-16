@@ -4,7 +4,7 @@ using System.Security.Cryptography;
 using System.Collections.Specialized;
 using System.Web;
 
-namespace wwwcore.Helpers;
+namespace Alga.wwwcore.Helpers;
 public static class TelegramInitDataValidator
 {
     public class UserData

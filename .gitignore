@@ -1,0 +1,79 @@
+### C# Library Ultimate .gitignore ###
+# Автосгенерировано для .NET 5+/Core/Standard проектов
+# Версия 2024.06
+
+# 1. Основные игноры сборки
+bin/**/*
+obj/**/*
+
+*.exe
+*.dll
+*.pdb
+*.cache
+*.xml
+*.deps.json          # Специально для вашего случая
+*.staticwebassets.*
+*.runtimeconfig.*
+
+# 2. Настройки IDE
+.vs/                 # Visual Studio
+.idea/               # Rider
+.vscode/             # VS Code
+!*.sln               # Исключение для файлов решения
+*.user
+*.suo
+*.userprefs
+*.DotSettings
+*.sln.iml
+*.csproj.iml
+
+# 3. NuGet и зависимости
+[Nn]u[Gg]et/
+packages/
+**/packages/build/
+*.nupkg
+nuget.exe
+.nuget/
+project.lock.json
+artifacts/
+
+# 4. Тесты и покрытие кода
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+coverage.xml
+*.coverage
+*.lcov
+
+# 5. Временные и системные файлы
+[Tt]humbs.db
+*.tmp
+*.temp
+*.log
+*.swp
+*.swo
+*.vspscc
+*.vssscc
+.DS_Store
+*.bak
+*.bk
+
+# 6. Специфичные для .NET Core
+launchSettings.json
+appsettings.*.json   # Все конфиги кроме основного
+**/wwwroot/lib/      # Локальные библиотеки
+.history/            # История dotnet CLI
+.dotnet/
+
+# 7. Документация и прочее
+doc/_site/
+*.chm
+*.docstates
+
+# 8. Docker и развертывание
+.dockerignore
+Dockerfile
+docker-compose.*
+local.settings.json
+
+### Конец файла ###

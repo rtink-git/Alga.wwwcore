@@ -21,11 +21,411 @@ optimizes Web development if you write all the code in Javascript. You get a fas
 ## How does this work. Step by step
 
 
-1. Create ASP.NET Core project or open an existing project
+### 1. Create ASP.NET Core project or open an existing project
 
-2. Add [Alga.wwwcore](https://www.nuget.org/packages/Alga.wwwcore) nuget package
+### 2. Add [Alga.wwwcore](https://www.nuget.org/packages/Alga.wwwcore) nuget package
 
-`> dotnet add package Alga.wwwcore --version X.X.X` (check last version)
+### 3. Optimize ASP.NET Core for Maximum Performance: Configure Kestrel, Rate Limiter, Caching, and Security. (Program.cs)
+
+``` 
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+
+var builder = WebApplication.CreateBuilder(args);
+
+var isDebug = builder.Environment.IsDevelopment();
+
+
+
+
+
+// Kestrel Server Configuration
+// -------------------------------
+// Production-optimized web server setup with security hardening, protocol optimization and connection management for high-load scenarios
+
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    // Limit the maximum size of the request body to 32 KB.
+    // Useful for static sites or APIs that only receive small payloads (like query parameters, not file uploads).
+    serverOptions.Limits.MaxRequestBodySize = 32 * 1024; // 32 KB
+
+    // Reduce the TCP keep-alive timeout.
+    // This limits how long idle connections stay open, freeing up resources.
+    // A short timeout like 5 seconds is ideal for static websites, SPAs, or CDN-like behavior.
+    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromSeconds(5);
+
+    // Set a strict timeout for receiving request headers.
+    // Helps mitigate slowloris-type attacks and ensures fast failure for broken clients.
+    serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromSeconds(5);
+
+    // Disable the default "Server: Kestrel" response header.
+    // This improves security by not disclosing the server type and saves a few bytes per response.
+    serverOptions.AddServerHeader = false;
+
+    // Set a cap on the number of concurrent TCP connections handled by Kestrel.
+    // This value can be tuned based on the server's capabilities and expected traffic.
+    serverOptions.Limits.MaxConcurrentConnections = 10_000;
+
+    // Specify supported HTTP protocols for endpoints (applies to all by default).
+    // HTTP/2 allows multiplexing multiple streams over a single connection — useful for static sites and APIs.
+    // HTTP/1 is kept for backward compatibility.
+    serverOptions.ConfigureEndpointDefaults(listenOptions =>
+    {
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+    });
+
+    // Optional: If you want full control over HTTPS, ports, and protocols, define explicit listeners.
+    // Example below sets up HTTPS on port 443 with specified protocols.
+    /*
+    serverOptions.ListenAnyIP(443, listenOptions =>
+    {
+        listenOptions.UseHttps(); // TLS is required for HTTP/2 and HTTP/3
+        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+    });
+    */
+});
+
+
+
+
+
+// Global Request Throttling
+// -------------------------
+// Per-client (IP) token bucket limiter to enforce request rate caps, prevent DoS-like behavior, and maintain service responsiveness under load.
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.GlobalLimiter = PartitionedRateLimiter.CreateChained(
+        PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+        {
+            // Пропускаем health-чекеры
+            if (httpContext.Request.Path.StartsWithSegments("/health"))
+                return RateLimitPartition.GetNoLimiter("healthchecks");
+
+            // Reject requests with missing IP address
+            var ip = httpContext.Connection.RemoteIpAddress?.ToString();
+            if (ip is null)
+            {
+                httpContext.Response.StatusCode = 400;
+                return RateLimitPartition.GetNoLimiter("invalid-ip");
+            }
+
+            return RateLimitPartition.GetTokenBucketLimiter(
+                partitionKey: ip,
+                factory: _ => new TokenBucketRateLimiterOptions
+                {
+                    // Maximum number of tokens available at once (burst capacity).
+                    // Allows short spikes of traffic.
+                    TokenLimit = isDebug ? 600 : 200,
+
+                    // Tokens added per replenishment cycle (sustained rate).
+                    TokensPerPeriod = 20, // Up to 20 requests per second
+
+                    // Interval at which tokens are refilled.
+                    ReplenishmentPeriod = TimeSpan.FromSeconds(1),
+
+                    // How many requests can be queued when tokens run out.
+                    QueueLimit = 20, // Allows some short waiting
+
+                    // Requests are processed in FIFO order from the queue.
+                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+
+                    // Tokens are refilled automatically by a background timer.
+                    AutoReplenishment = true
+                });
+        }),
+        
+        // Global sliding window limiter (to protect backend globally)
+        PartitionedRateLimiter.Create<HttpContext, string>(_ =>
+            RateLimitPartition.GetSlidingWindowLimiter(
+                "GlobalLimit",
+                _ => new SlidingWindowRateLimiterOptions
+                {
+                    // Total allowed requests per window
+                    PermitLimit = 5000,
+                    // Time window duration
+                    Window = TimeSpan.FromSeconds(1),
+                    // Subdivision of window (e.g. 2 × 500ms)
+                    SegmentsPerWindow = 2
+                }))
+    );
+
+    // Respond with HTTP 429 "Too Many Requests" when rate limit is exceeded.
+    options.RejectionStatusCode = 429;
+
+    // Optional: Set a Retry-After header to suggest when the client can retry.
+    options.OnRejected = async (context, token) =>
+    {
+        context.HttpContext.Response.Headers["Retry-After"] = "10";
+        await ValueTask.CompletedTask;
+    };
+});
+
+
+
+
+
+// Global Response Compression
+// ---------------------------
+// Global response compression setup to reduce response size over HTTPS and improve overall performance for supported MIME types.
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.Providers.Clear(); // Remove default providers (e.g., Gzip)
+    options.Providers.Add<BrotliCompressionProvider>(); // Use Brotli compression (modern, efficient)
+    options.EnableForHttps = true; // Enable compression for HTTPS responses
+
+    // List of MIME types to compress
+    options.MimeTypes = new[]
+    {
+        "text/*",                      // HTML, CSS, plain text, etc.
+        "application/*+xml",          // XML-based formats (e.g. SVG, Atom)
+        "application/json",           // JSON responses
+        "application/javascript",     // JS files
+        "application/wasm",           // WebAssembly modules
+        "application/octet-stream",   // Binary data (e.g. Blazor DLLs)
+        "image/svg+xml",              // SVG images
+        "application/x-msgpack",      // MessagePack (binary JSON)
+        "font/woff2"                  // Compressed web fonts
+    };
+});
+
+// Configure Brotli compression level
+builder.Services.Configure<BrotliCompressionProviderOptions>(options =>
+{
+    options.Level = CompressionLevel.Fastest; // Use fastest (least CPU-intensive) compression
+});
+
+
+
+
+
+// Global Output Cache Policy
+// --------------------------
+// Configures output caching to improve performance and reduce response time for repeat requests.
+// Includes a named policy with server and client cache control for specific endpoints.
+
+var HOutputCachePolicy = "HOutputCachePolicy";
+builder.Services.AddOutputCache(options =>
+{
+    options.DefaultExpirationTimeSpan = TimeSpan.Zero;
+    options.AddPolicy(HOutputCachePolicy, builder => builder.Expire(TimeSpan.FromSeconds(RtInk.Constants.HInSecForCache)));
+});
+
+
+
+
+
+// Global Request Timeout Policy
+// -----------------------------
+// Global request timeout setup to limit request execution time and improve service reliability.
+// Defines a default timeout and a named short-timeout policy for specific endpoints.
+
+var S5TimeoutPolicy = "S5TimeoutPolicy";
+builder.Services.AddRequestTimeouts(options =>
+{
+    options.DefaultPolicy = new RequestTimeoutPolicy { Timeout = TimeSpan.FromSeconds(3), TimeoutStatusCode = 503 };
+    options.AddPolicy(S5TimeoutPolicy, TimeSpan.FromSeconds(5));
+});
+
+
+
+
+
+// HTTP Strict Transport Security (HSTS)
+// -------------------------------------
+// Configures HSTS to enforce HTTPS by instructing browsers to always use secure connections.
+// Helps protect against protocol downgrade attacks and cookie hijacking.
+
+builder.Services.AddHsts(options =>
+{
+    options.MaxAge = TimeSpan.FromDays(720);         // Informs browsers to remember HTTPS enforcement for 720 days
+    options.IncludeSubDomains = true;                // Applies HSTS policy to all subdomains as well
+    options.Preload = true;                          // Indicates intent to be included in browser preload lists (requires submission)
+    
+    // Additional configuration:
+    options.ExcludedHosts.Add("localhost");          // Excludes localhost to avoid HSTS issues during local development
+});
+
+
+
+
+
+var app = builder.Build();
+
+
+
+
+
+// Production Error Handling & Security
+// ------------------------------------
+// In production environments, configure global error handling and enable HSTS
+// to enforce HTTPS usage and protect against downgrade attacks.
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/error"); // Redirects unhandled exceptions to a custom error endpoint
+    app.UseHsts();                     // Adds HTTP Strict Transport Security header to enforce HTTPS
+    app.UseHttpsRedirection();         // Enable only in Production
+}
+
+
+
+
+
+// Alga.wwwcore - nuget package
+// ------------------------------------
+// ------------------------------------
+
+var config = builder.Configuration.GetSection("AlgaWwwcoreConfig").Get<Alga.wwwcore.Root.ConfigModel>();
+var logger = app.Services.GetRequiredService<ILogger<Alga.wwwcore.Root>>();
+if (config != null) await new Alga.wwwcore.Root(config, logger).Start();
+
+
+
+
+
+// Enables response compression to reduce bandwidth
+app.UseResponseCompression();
+
+// Enforces request rate limits to prevent DDoS/abuse
+app.UseRateLimiter();
+
+// Automatically cancels long-running requests after timeout
+app.UseRequestTimeouts();
+
+// Caches responses to improve performance
+app.UseOutputCache();
+
+
+
+
+
+// Static File Serving with Advanced Caching
+// -----------------------------------------
+// Configures custom static file handling with fine-tuned cache control, ETag/Last-Modified validation,
+// preload hints for critical assets, MIME overrides, and cross-origin protection. Enhances performance,
+// reduces redundant transfers, and improves user experience across browsers and CDNs.
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    OnPrepareResponse = ctx =>
+    {
+        var headers = ctx.Context.Response.Headers;
+        var file = ctx.File;
+        var fileName = file.Name;
+        var fileExt = Path.GetExtension(fileName);
+        var path = file.PhysicalPath;
+
+        int maxAge = (fileName.ToLowerInvariant()) switch
+        {
+            "serviceworker.js" => 0,
+            "app.js" or "manifest.json" => RtInk.Constants.HInSecForCache,
+            _ => fileExt.ToLowerInvariant() switch
+            {
+                ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => RtInk.Constants.ThirtyDInSecForCache,
+                ".css" or ".js" or ".html" => RtInk.Constants.HInSecForCache,
+                _ => RtInk.Constants.HInSecForCache
+            }
+        };
+
+        bool isImmutable = maxAge > 0;
+
+        headers["Cache-Control"] = $"public, max-age={maxAge}" + (isImmutable ? ", immutable" : ", must-revalidate");
+        headers["Vary"] = "Accept-Encoding";
+        headers["Cross-Origin-Resource-Policy"] = "same-origin";
+
+        var lastModified = file.LastModified.UtcDateTime;
+        string etag = $"\"{lastModified.Ticks:x}\""; // hex ticks
+
+        headers["Last-Modified"] = lastModified.ToString("R"); // RFC1123
+        headers["ETag"] = etag;
+
+        var request = ctx.Context.Request;
+
+        // ETag: If-None-Match
+        if (request.Headers.TryGetValue("If-None-Match", out var inm) && inm == etag)
+        {
+            ctx.Context.Response.StatusCode = StatusCodes.Status304NotModified;
+            ctx.Context.Response.Body = Stream.Null;
+            return;
+        }
+
+        // If-Modified-Since (дополнительно к ETag)
+        if (request.Headers.TryGetValue("If-Modified-Since", out var ims)
+            && DateTime.TryParse(ims, out var imsDate)
+            && lastModified <= imsDate)
+        {
+            ctx.Context.Response.StatusCode = StatusCodes.Status304NotModified;
+            ctx.Context.Response.Body = Stream.Null;
+            return;
+        }
+
+        // HTTP/103 Early Hints
+        if (ctx.Context.Response.SupportsTrailers())
+        {
+            var preloadType = fileExt switch
+            {
+                ".js" => "script",
+                ".css" => "style",
+                ".woff2" => "font",
+                _ => null
+            };
+            if (preloadType != null)
+            {
+                headers.Append("Link", $"</{file.Name}>; rel=preload; as={preloadType}");
+            }
+        }
+
+        // Custom content types (если нужно)
+        switch (fileName.ToLowerInvariant())
+        {
+            case "manifest.json":
+                headers["Content-Type"] = "application/manifest+json";
+                break;
+            case "serviceworker.js":
+                headers["Content-Type"] = "application/javascript";
+                break;
+        }
+    }
+});
+
+
+
+
+
+// Global Security Headers
+// ------------------------
+// Sets core HTTP security headers to improve privacy, prevent clickjacking, avoid MIME sniffing,
+// and restrict access to sensitive browser features like camera, microphone, and opener context.
+
+app.Use(async (context, next) =>
+{
+    var headers = context.Response.Headers;
+
+    // Prevents MIME type sniffing (e.g. executing images as scripts)
+    headers["X-Content-Type-Options"] = "nosniff";
+
+    // Denies page embedding via <iframe>, <frame>, or <object> (clickjacking protection)
+    headers["X-Frame-Options"] = "DENY";
+
+    // Ensures no referrer information is sent with requests (maximizes privacy)
+    headers["Referrer-Policy"] = "no-referrer";
+
+    // Restricts use of sensitive browser APIs from this origin (hardens access to device features)
+    headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+
+    // Isolates the browsing context but still allows popups to retain opener (useful for SPA+MPA apps)
+    headers["Cross-Origin-Opener-Policy"] = "same-origin-allow-popups";
+
+    await next();
+});
+
+
+
+
+
+await app.RunAsync();
+``` 
 
 3. НАСТРОЙКА
 
@@ -237,11 +637,13 @@ A logging system with hints and error information was added to the project. Moni
 
 What has been changed in new build (4.0.0) compared to the previous version (3.2.3)
 
-- NEW: Added the ability to obfuscate JavaScript code
+- Removed BuildBundlerMinifier - deprecated. Added simplified and modern Bundler implementation + NUglify
+- General project settings are now recommended to be stored in appsettings.json
+- Now the application architecture can be designed more flexibly. Now it works like this: we look for directories where there is a scheme.json and consider that the files contained in them form the pages of the web application (user interface screen). Important: The names of the directories that contain scheme.json are unique names of your pages, which should not be repeated.
+- Added additional information to the documentation about setting up your ASP.NET that may be useful
+- SEO optimization tools have been returned
+- Changed the logic of building and storing http document, now its formation and transmission are carried out faster
 
-- Удален BuildBundlerMinifier - плохо справляется с мминификацией на проектах с современным кодом. Добавлена собственная реализация Bundler + NUglify
-- Перенесли настройку структуры ваших страниц в настройки appsettings.json, что сделало код более гибким, теперь вы в гораздо меньшей степени зависите ин структуры расположения кода навязанной нами 
-- Добавлена возможность обфускации JS кода
 
 
 
@@ -257,7 +659,7 @@ git: [https://github.com/rtink-git/RtInkGit](https://github.com/rtink-git/RtInkG
 
 
 
-## Additional settings -  которые вам должны помочь
+## Additional settings
 
 1. Настройка .csproj - проекта asp где находятся ваши script & style файлы цель не отправлять файлы на сервер которые не будут на нем применяться и служат или для сборки проекта или в dev версии
 
