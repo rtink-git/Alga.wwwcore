@@ -39,8 +39,10 @@ class ServiceworkerJs
 const CACHE_NAME = '{cacheName}';
 const URLs_TO_CACHE = [{array}];
 const OFFLINE_PAGE = '/offline';
-const staticExtensions = ['.html', '.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.woff2', '.woff', '.ttf', '.eot'];
+const staticExtensions = ['.html', '.js', '.css', '.svg', '.woff2', '.woff', '.ttf', '.eot'];
 const TIMESTAMP_SKIP_RE = /\.([0-9]{12})\.min\.(js|css|png|woff2?)$/i;
+const MEDIA_SKIP_RE = /\.(?:png|jpe?g|gif|webp)$/i;
+
 
 self.addEventListener('install', (event) => {{
   event.waitUntil(
@@ -91,7 +93,7 @@ self.addEventListener('fetch', (event) => {{
 
     const req = event.request;
     const url = new URL(req.url); 
-    if (TIMESTAMP_SKIP_RE.test(url.pathname)) return;
+    if (TIMESTAMP_SKIP_RE.test(url.pathname) || MEDIA_SKIP_RE.test(url.pathname)) return;
 
     event.respondWith((async () => {{
       /* --- 1. NAVIGATION PRELOAD ---------------------------------- */

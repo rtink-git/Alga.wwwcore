@@ -322,79 +322,76 @@ app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
     {
-        var headers = ctx.Context.Response.Headers;
-        var file = ctx.File;
-        var fileName = file.Name;
-        var fileExt = Path.GetExtension(fileName).ToLowerInvariant();
-        var isDevelopment = ctx.Context.Request.Host.Host.Contains("localhost");
-
-        var (maxAge, isImmutable, useStaleWhileRevalidate) = fileName.ToLowerInvariant() switch
+        if (!isDebug)
         {
-            // Версионированные файлы (с хешем/версией в имени)
-            _ when verFileRx.IsMatch(fileName) => 
-                (31_536_000, true, true), // 365 дней + immutable + SWR
-            
-            // Критические файлы
-            "serviceworker.js" => (isDevelopment ? 60 : 86_400, false, false), // 24 часа в prod
-            "app.js" => (isDevelopment ? 60 : 172_800, false, false), // 48 часов в prod
-            "manifest.json" => (86_400, false, false), // 24 часа
-            
-            // Статические ресурсы
-            _ when fileExt is ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => 
-                (2_592_000, true, true), // 30 дней
-                
-            _ when fileExt is ".css" or ".js" or ".html" => 
-                (isDevelopment ? 60 : 604_800, false, true), // 1 неделя в prod
-                
-            _ => (isDevelopment ? 60 : 86_400, false, false) // 24 часа по умолчанию
-        };
+            var headers = ctx.Context.Response.Headers;
+            var file = ctx.File;
+            var fileName = file.Name;
+            var fileExt = Path.GetExtension(fileName).ToLowerInvariant();
 
-        var cacheControl = new StringBuilder($"public, max-age={maxAge}");
-        if (isImmutable) cacheControl.Append(", immutable");
-        if (useStaleWhileRevalidate) cacheControl.Append($", stale-while-revalidate={maxAge / 2}");
-        headers["Cache-Control"] = cacheControl.ToString();
-
-        headers["Vary"] = "Accept-Encoding";
-        headers["Cross-Origin-Resource-Policy"] = "same-origin";
-
-        var lastModified = file.LastModified.UtcDateTime;
-        var etag = $"\"{lastModified.Ticks:x}\"";
-        headers["Last-Modified"] = lastModified.ToString("R");
-        headers["ETag"] = etag;
-
-        // Проверка условий 304 Not Modified
-        var request = ctx.Context.Request;
-        if (request.Headers.IfNoneMatch.Any(v => v == etag) || 
-           (request.Headers.IfModifiedSince is {} ifModifiedSince && 
-            DateTime.TryParse(ifModifiedSince, out var ifModifiedSinceDate) && 
-            lastModified <= ifModifiedSinceDate))
-        {
-            ctx.Context.Response.StatusCode = StatusCodes.Status304NotModified;
-            ctx.Context.Response.Body = Stream.Null;
-            return;
-        }
-
-        if (!isDevelopment && ctx.Context.Response.SupportsTrailers())
-        {
-            var asType = fileExt switch
+            var (maxAge, isImmutable, useStaleWhileRevalidate) = fileName.ToLowerInvariant() switch
             {
-                ".js" => "script",
-                ".css" => "style",
-                ".woff2" => "font",
-                _ => null
-            };
-            if (asType != null)
-                headers.Append("Link", $"</{fileName}>; rel=preload; as={asType}");
-        }
+                // Версионированные файлы (с хешем/версией в имени)
+                _ when verFileRx.IsMatch(fileName) => (31_536_000, true, true), // 365 дней + immutable + SWR
 
-        switch (fileName.ToLowerInvariant())
-        {
-            case "manifest.json":
-                headers["Content-Type"] = "application/manifest+json";
-                break;
-            case "serviceworker.js":
-                headers["Content-Type"] = "application/javascript";
-                break;
+                // Критические файлы
+                "serviceworker.js" => (86_400, false, false), // 24 часа в prod
+                "app.js" => (172_800, false, false), // 48 часов в prod
+                "manifest.json" => (86_400, false, false), // 24 часа
+
+                // Статические ресурсы
+                _ when fileExt is ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => (2_592_000, true, true), // 30 дней
+                _ when fileExt is ".css" or ".js" or ".html" => (604_800, false, true), // 1 неделя в prod
+                _ => (86_400, false, false) // 24 часа по умолчанию
+            };
+
+            var cacheControl = new StringBuilder($"public, max-age={maxAge}");
+            if (isImmutable) cacheControl.Append(", immutable");
+            if (useStaleWhileRevalidate) cacheControl.Append($", stale-while-revalidate={maxAge / 2}");
+            headers["Cache-Control"] = cacheControl.ToString();
+
+            headers["Vary"] = "Accept-Encoding";
+            headers["Cross-Origin-Resource-Policy"] = "same-origin";
+
+            var lastModified = file.LastModified.UtcDateTime;
+            var etag = $"\"{lastModified.Ticks:x}\"";
+            headers["Last-Modified"] = lastModified.ToString("R");
+            headers["ETag"] = etag;
+
+            // Проверка условий 304 Not Modified
+            var request = ctx.Context.Request;
+            if (request.Headers.IfNoneMatch.Any(v => v == etag) ||
+               (request.Headers.IfModifiedSince is { } ifModifiedSince &&
+                DateTime.TryParse(ifModifiedSince, out var ifModifiedSinceDate) &&
+                lastModified <= ifModifiedSinceDate))
+            {
+                ctx.Context.Response.StatusCode = StatusCodes.Status304NotModified;
+                ctx.Context.Response.Body = Stream.Null;
+                return;
+            }
+
+            if (ctx.Context.Response.SupportsTrailers())
+            {
+                var asType = fileExt switch
+                {
+                    ".js" => "script",
+                    ".css" => "style",
+                    ".woff2" => "font",
+                    _ => null
+                };
+                if (asType != null)
+                    headers.Append("Link", $"</{fileName}>; rel=preload; as={asType}");
+            }
+
+            switch (fileName.ToLowerInvariant())
+            {
+                case "manifest.json":
+                    headers["Content-Type"] = "application/manifest+json";
+                    break;
+                case "serviceworker.js":
+                    headers["Content-Type"] = "application/javascript";
+                    break;
+            }
         }
     }
 });
@@ -709,4 +706,4 @@ What has been changed in new build (4.0.4) compared to the previous version (3.2
 An example of using Alga.wwwcore nuget package on a real ASP.NET Core project
 
 web: [https://git.rt.ink](https://git.rt.ink)
-git: [https://github.com/rtink-git/RtInkGit](https://github.com/rtink-git/RtInkGit/tree/main/RtInkGit/RtInkGit)
+git: [https://github.com/rtink-git/RtInkGit](https://github.com/rtink-git/RtInkGit)

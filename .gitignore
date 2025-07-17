@@ -1,44 +1,77 @@
-# .NET build folders
+## .NET Core / .NET 5+ / .NET 6–9 ##
 bin/
 obj/
-
-# User-specific files
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-
-# Visual Studio Code
-.vscode/
+*.vs/
 
 # Build results
 *.dll
 *.exe
 *.app
-*.pdb
-*.cache
-*.mdb
 *.log
+*.cache
+*.pdb
+*.mdb
+*.xml
+*.deps.json
+*.runtimeconfig.json
 
-# NuGet
+# NuGet packages
 *.nupkg
 *.snupkg
-.nuget/
 packages/
+*.nuspec
 
-# Rider & JetBrains IDEs
+# Visual Studio Code
+.vscode/
+
+# Rider
 .idea/
 
-# VS for Mac
-*.pidb
-*.ide
-
-# Others
-*.db
-*.DS_Store
-*.Thumbs.db
-
-# Resharper / dotCover
+# ReSharper
 _ReSharper*/
 *.DotSettings.user
-.idea/
+
+# Local test results
+TestResults/
+*.coverage
+*.coveragexml
+*.trx
+
+# Global.json user-local SDK settings
+global.json.user
+
+# Dotnet CLI tool restore cache
+.dotnet_tool/
+
+# Mac
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Temporary
+*.tmp
+*.bak
+*.swp
+
+# Paket
+.paket/
+paket-files/
+
+# JetBrains Rider User-specific
+*.sln.iml
+
+# Optional: если используешь GitVersion
+GitVersion.yml
+.gitversion
+
+# Optional: если используешь GitHub Actions
+*.code-workspace
