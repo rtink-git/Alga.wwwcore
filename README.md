@@ -1,19 +1,26 @@
 # Alga.wwwcore
 
-Alga.wwwcore nuget package - ASP NET Frontend Web Server, for JavaScript Developers. Позволяет сделать ваш Web Site быстрее - использует бандлинг и минимификацию и другие инструменты копресссии и кеширования, позволяет работать вашему проекту offline благодаря ServiceWorker.js. Можно использовать веб как приложение благодаря PWA, если добавить на экран устройства. Быстрое создание Android App, на базе PWA (MPA)
+Alga.wwwcore is a specialized package for ASP.NET Core, designed to prepare the frontend of web applications for production deployment with support for PWA, Android, and Telegram Mini Apps.
+The library operates based on a predefined project structure and ensures its support during development. It automates key stages of frontend preparation, allowing you to focus on application logic rather than infrastructure.
 
-optimizes Web development if you write all the code in Javascript. You get a fast Web app, with the ability to work offline (PWA) and the ability to quickly turn it into an Android App
+**Description**
 
+The project structure consists of a collection of pages and modules (reusable components) intended for building the user interface.
+Each page includes its own JavaScript code, styles, and a schema containing metadata about the page and integration data for modules. Modules contain only scripts and styles and can be reused across multiple pages.
 
-- Less UI logic in asp.net
-- Automatically generate a `<head>` for the correct operation of the web application
-- The "bindleconfig.json" file is automatically generated, which defines the rules for bindling and minifying javascript & css files for each page (UI Screen)
-- Automatically generated "manifest.json" wНhich is necessary for PWA to work correctly
-- Tool to add SEO instructions for each page (user interface screen) and the ability to override them
+Based on this structure, the library automatically generates SEO-optimized HTML files with required meta tags (<meta>, OpenGraph, JSON-LD, etc.).
+All referenced scripts and styles are bundled, minified, and compressed (Gzip, Brotli) into a single file, which is then inlined into the page header to ensure instant interface loading.
 
-- Автоматически создается правильно работающий PWA который может работать как online так и offline (полноценное приложение которое работает на движке браузера) и вы можете использовать его как полноценное приложение добавыа иконку на экран приложения
+The library also auto-generates an optimized ServiceWorker.js, enabling resource caching and partial offline support.
 
-- Android App - для того чтобы создать на то чтобы создать полноценное андроид приложение ва нужно выполнить несколько комманд и у вас уже будет полноценный apk файл
+A manifest.json is generated to allow your web project to function as a full-featured Progressive Web App (PWA), including installation to a mobile device’s home screen.
+
+The project is also ready to be packaged into an .apk using Trusted Web Activity (TWA), enabling it to run as a native-like Android application.
+
+When installed as a PWA or launched as an Android app, a “lightweight” SPA mode is activated: navigation between pages occurs without full reloads, delivering behavior close to native apps.
+
+Additionally, the library provides built-in tools for integrating with the Telegram Mini App platform, including support for authenticating users via Telegram.
+
 
 
 
@@ -33,9 +40,6 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 var builder = WebApplication.CreateBuilder(args);
 
 var isDebug = builder.Environment.IsDevelopment();
-
-
-
 
 
 // Kestrel Server Configuration
@@ -250,6 +254,24 @@ builder.Services.AddHsts(options =>
 
 
 
+// Alga.wwwcore Root Initialization
+// --------------------------------
+// Registers the Alga.wwwcore.Root as a singleton service.
+// Initializes it with configuration from "AlgaWwwcoreConfig", logger instance, and environment mode.
+// Enables structured frontend generation and development-time support based on project config.
+
+builder.Services.AddSingleton<Alga.wwwcore.Root>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>().GetSection("AlgaWwwcoreConfig").Get<Alga.wwwcore.Models.Config>();
+    var logger  = sp.GetRequiredService<ILogger<Alga.wwwcore.Root>>();
+    var isDebug = sp.GetRequiredService<IHostEnvironment>().IsDevelopment();
+    return new Alga.wwwcore.Root(cfg, isDebug, logger);
+});
+
+
+
+
+
 var app = builder.Build();
 
 
@@ -267,18 +289,6 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();                     // Adds HTTP Strict Transport Security header to enforce HTTPS
     app.UseHttpsRedirection();         // Enable only in Production
 }
-
-
-
-
-
-// Alga.wwwcore - nuget package
-// ------------------------------------
-// ------------------------------------
-
-var config = builder.Configuration.GetSection("AlgaWwwcoreConfig").Get<Alga.wwwcore.Root.ConfigModel>();
-var logger = app.Services.GetRequiredService<ILogger<Alga.wwwcore.Root>>();
-if (config != null) await new Alga.wwwcore.Root(config, logger).Start();
 
 
 
@@ -306,6 +316,8 @@ app.UseOutputCache();
 // preload hints for critical assets, MIME overrides, and cross-origin protection. Enhances performance,
 // reduces redundant transfers, and improves user experience across browsers and CDNs.
 
+var verFileRx = new Regex(@"\.[0-9]{12}\.min\.(js|css)$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+
 app.UseStaticFiles(new StaticFileOptions
 {
     OnPrepareResponse = ctx =>
@@ -313,70 +325,68 @@ app.UseStaticFiles(new StaticFileOptions
         var headers = ctx.Context.Response.Headers;
         var file = ctx.File;
         var fileName = file.Name;
-        var fileExt = Path.GetExtension(fileName);
-        var path = file.PhysicalPath;
+        var fileExt = Path.GetExtension(fileName).ToLowerInvariant();
+        var isDevelopment = ctx.Context.Request.Host.Host.Contains("localhost");
 
-        int maxAge = (fileName.ToLowerInvariant()) switch
+        var (maxAge, isImmutable, useStaleWhileRevalidate) = fileName.ToLowerInvariant() switch
         {
-            "serviceworker.js" => 0,
-            "app.js" or "manifest.json" => RtInk.Constants.HInSecForCache,
-            _ => fileExt.ToLowerInvariant() switch
-            {
-                ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => RtInk.Constants.ThirtyDInSecForCache,
-                ".css" or ".js" or ".html" => RtInk.Constants.HInSecForCache,
-                _ => RtInk.Constants.HInSecForCache
-            }
+            // Версионированные файлы (с хешем/версией в имени)
+            _ when verFileRx.IsMatch(fileName) => 
+                (31_536_000, true, true), // 365 дней + immutable + SWR
+            
+            // Критические файлы
+            "serviceworker.js" => (isDevelopment ? 60 : 86_400, false, false), // 24 часа в prod
+            "app.js" => (isDevelopment ? 60 : 172_800, false, false), // 48 часов в prod
+            "manifest.json" => (86_400, false, false), // 24 часа
+            
+            // Статические ресурсы
+            _ when fileExt is ".png" or ".jpg" or ".jpeg" or ".gif" or ".webp" => 
+                (2_592_000, true, true), // 30 дней
+                
+            _ when fileExt is ".css" or ".js" or ".html" => 
+                (isDevelopment ? 60 : 604_800, false, true), // 1 неделя в prod
+                
+            _ => (isDevelopment ? 60 : 86_400, false, false) // 24 часа по умолчанию
         };
 
-        bool isImmutable = maxAge > 0;
+        var cacheControl = new StringBuilder($"public, max-age={maxAge}");
+        if (isImmutable) cacheControl.Append(", immutable");
+        if (useStaleWhileRevalidate) cacheControl.Append($", stale-while-revalidate={maxAge / 2}");
+        headers["Cache-Control"] = cacheControl.ToString();
 
-        headers["Cache-Control"] = $"public, max-age={maxAge}" + (isImmutable ? ", immutable" : ", must-revalidate");
         headers["Vary"] = "Accept-Encoding";
         headers["Cross-Origin-Resource-Policy"] = "same-origin";
 
         var lastModified = file.LastModified.UtcDateTime;
-        string etag = $"\"{lastModified.Ticks:x}\""; // hex ticks
-
-        headers["Last-Modified"] = lastModified.ToString("R"); // RFC1123
+        var etag = $"\"{lastModified.Ticks:x}\"";
+        headers["Last-Modified"] = lastModified.ToString("R");
         headers["ETag"] = etag;
 
+        // Проверка условий 304 Not Modified
         var request = ctx.Context.Request;
-
-        // ETag: If-None-Match
-        if (request.Headers.TryGetValue("If-None-Match", out var inm) && inm == etag)
+        if (request.Headers.IfNoneMatch.Any(v => v == etag) || 
+           (request.Headers.IfModifiedSince is {} ifModifiedSince && 
+            DateTime.TryParse(ifModifiedSince, out var ifModifiedSinceDate) && 
+            lastModified <= ifModifiedSinceDate))
         {
             ctx.Context.Response.StatusCode = StatusCodes.Status304NotModified;
             ctx.Context.Response.Body = Stream.Null;
             return;
         }
 
-        // If-Modified-Since (дополнительно к ETag)
-        if (request.Headers.TryGetValue("If-Modified-Since", out var ims)
-            && DateTime.TryParse(ims, out var imsDate)
-            && lastModified <= imsDate)
+        if (!isDevelopment && ctx.Context.Response.SupportsTrailers())
         {
-            ctx.Context.Response.StatusCode = StatusCodes.Status304NotModified;
-            ctx.Context.Response.Body = Stream.Null;
-            return;
-        }
-
-        // HTTP/103 Early Hints
-        if (ctx.Context.Response.SupportsTrailers())
-        {
-            var preloadType = fileExt switch
+            var asType = fileExt switch
             {
                 ".js" => "script",
                 ".css" => "style",
                 ".woff2" => "font",
                 _ => null
             };
-            if (preloadType != null)
-            {
-                headers.Append("Link", $"</{file.Name}>; rel=preload; as={preloadType}");
-            }
+            if (asType != null)
+                headers.Append("Link", $"</{fileName}>; rel=preload; as={asType}");
         }
 
-        // Custom content types (если нужно)
         switch (fileName.ToLowerInvariant())
         {
             case "manifest.json":
@@ -423,28 +433,53 @@ app.Use(async (context, next) =>
 
 
 
+// -- endpoints: EXAMPLE
+
+AppMapGet("/", "i");
+AppMapGet("/a/{search}", "i");
+AppMapGet("/about", "about");
+AppMapGet("/access", "access");
+AppMapGet("/app", "app");
+AppMapGet("/bookmarks", "bookmarks");
+AppMapGet("/offline", "offline"); 
+AppMapGet("/error", "Error");
+AppMapGet("/error/{code}", "Error");
+AppMapGet("/i/{search}", "i");
+AppMapGet("/locs", "Locs");
+AppMapGet("/privacy", "Privacy");
+AppMapGet("/settings", "Settings");
+AppMapGet("/terms", "Terms");
+AppMapGet("/u/{login-search}", "u");
+AppMapGet("/users", "users");
+
+void AppMapGet(string route, string template) {
+    app.MapGet(route, async (HttpContext context, Alga.wwwcore.Root www) =>
+    {
+        context.Response.ContentType = "text/html; charset=utf-8";
+        context.Response.Headers.CacheControl = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
+
+        var writer = context.Response.BodyWriter;
+
+        try
+        {
+            context.Response.StatusCode = 200;
+            www.WriteHtml(writer, $"/UISs/{template}");
+            await writer.FlushAsync();
+        }
+        catch (Exception ex)
+        {
+            context.Response.StatusCode = 500;
+            await context.Response.WriteAsync("Internal Server Error");
+        }
+    }).CacheOutput(HOutputCachePolicy);
+}
+
+
 
 await app.RunAsync();
 ``` 
 
-3. НАСТРОЙКА
-
-
-4. Open "wwwroot" directory (if not exist - create it)
-
-- Create "Components" dirictory (wwwroot/Modules)
-- - Create "Total" dirictory - is main component
-- - - Create "content" dirictory (wwwroot/Modules/Total/content) - this is where images and other files will be stored
-- - - - Add Icons: Icon-32.png (32x32px), "Icon-180.png" (180x180px), "Icon-192.png" (192x192px), "Icon-512.png" (512x512px)
-- - - - Add screenshots: screenshot-vertical.png (1080x1920px), screenshot-horizontal.png (1920x1080px)
-- Create "UIRs" dirictory (wwwroot/UIRs) - For your Pages (UI Screens) - Required
-- - Create Page (UI Screen) directory {Index} (wwwroot/UIRs/Index)
-- - - Create file "script.js" (wwwroot/UIRs/Index/script.js) - Required. This is the file that will be called to build the page (UI Screen)
-- - - Create file "style.css" (wwwroot/UIRs/Index/script.js) - File for storing styles
-- - - Create "content" directory (wwwroot/UIRs/Index/content) - Вirectory for storing images and other page's content
-- - - Create file "scheme.json" (wwwroot/UIRs/Index/scheme.json) - Page (UI Screen) scheme with primary information about the page and a list of links to external components (modules) that are used on this page (called script.js)
-
-6. Add in "appsettings.json"
+### 4. Add configuration for correct library operation. (appsettings.json)
 
 ```
 {
@@ -461,219 +496,147 @@ await app.RunAsync();
         "BackgroundColor": "#1f1f1f",
         "ThemeColor": "#1f1f1f",
         "Lang": "en"
+        "cacheUrls" : [ "/error", "/error/crashed", "/locs", "https://api.example.ink/ListOfCountries" ],
+        "UseMessagePack": "true",
+        "UseTelegram": "true"
     }
     ...
 }
 ```
 
-CacheControlInSDefault  - The default cache management duration (in seconds) for all application UI Screens. The default value is -1, indicating no cache control by default.
+### 5. Expected Data Structure
 
-ЗАПУСК
+You are free to use any architecture and design approaches when building your web application — the Alga.wwwcore library does not impose any restrictions on implementation. However, it only processes project structures and data formats that conform to its expected layout.
 
-6. Program.cs & "Alga.wwwcore" nuget package
+**Example of expected structure in the wwwroot/ directory**
 
-Устанавливаете ссылку на пакет 
+wwwroot/
+├── Pages/
+│   ├── Home/
+│   │   ├── scheme.json    # required (page metadata)
+│   │   ├── script.js      # required (page logic)
+│   │   └── style.css      # optional page styles
+│   ├── About/
+│   │   ├── scheme.json    # required
+│   │   ├── script.js      # required
+│   │   └── style.css
+│
+├── Modules/
+│   ├── HeaderBox/
+│   │   ├── script.js (module logic invoked by page script)
+│   │   └── style.css (module style)
+│   ├── ItemListBox/
+│   │   ├── script.js
+│   │   └── style.css
+│   ├── Total/
+│   │   └── style.css
+│   └── ServerApis/
+│       └── script.js
 
-```
-using Alga.wwwcore;
-```
+#### Scheme.json
 
-Устанавливаете AddHttpContextAccessor - это важно
-
-```
-builder.Services.AddHttpContextAccessor();
-```
-
-Парсим и встраиваем в код иннформмацию из конигурационного файла
-
-```
-builder.Services.Configure<Root.ConfigModel>(builder.Configuration.GetSection("AlgaWwwcoreConfig"));
-```
-
-Пример конфогурационного файла appsettings.json, то есть то что можно установить один раз и забыть 
+scheme.json is a required file that defines the structure and metadata of a page. It can be located anywhere within the wwwroot directory.
+The library automatically scans the entire wwwroot for scheme.json files and uses their locations to identify the directories that contain scripts and styles for application pages. These directories are then treated as individual pages in the application.
 
 ```
 {
-    ...
-  "AlgaWwwcoreConfig": {
-    "Name": "RT.Ink",
-    "NameShort": "RT - Your Feed",
-    "Description": "Discover breaking news and stay informed with RT.ink. Explore global headlines, in-depth analysis, and top stories tailored for you. Join our platform today!",
-    "CacheControlInSDefault": 10800, 
-    "PreconnectUrls": ["https://api.rt.com"],
-    "GoogleFontsUrl": "https://fonts.googleapis.com/css2?family=Audiowide&family=Montserrat:wght@500;600;700&family=Nunito:wght@500;700&Mulish:wght@500&display=swap",
-    "BackgroundColor": "#1f1f1f",
-    "ThemeColor": "#1f1f1f",
-    "Lang": "en"
-    "schemes": [
+  "title": "DefaultApp - Welcome to Your Starter Page",
+  "description": "This is a sample starter page for your web application. Customize it with your own content, components, and branding.",
+  "robot": "noindex",
+  "modules": [
+    "/Modules/LayoutShell",
+    "/Modules/UserAuth",
+    "/Modules/TimeUtils",
+    "/Modules/NavBar",
+    "/Modules/PageHeader",
+    "/Modules/ContentList",
+    "/Modules/LoadMoreButton",
+    "/Modules/FooterBasic"
+  ]
+}
+```
+**Field Descriptions**
+
+- title: The <title> tag for the page. Used in the HTML <head>. This can be overridden dynamically at runtime if needed.
+- description: The <meta name="description"> tag describing the content of the page. Used by search engines and preview snippets.
+- robot: The <meta name="robots"> tag, which gives instructions to search engine crawlers about how to index and follow the page.
+Common values:
+	•	"index" (default behavior)
+	•	"noindex" — exclude from indexing
+	•	"nofollow" — don’t follow links
+	•	or combined: "noindex, nofollow"
+- modules: A list of relative paths to module folders or files. Each module may include:
+	•	script.js — logic for the component
+	•	style.css — styles for the component
+If the page does not contain modules, you can skip adding this field.
+
+#### Page script.js
+
+Each page must include a script.js file that contains the logic for rendering and managing the user interface of that page.
+
+**Important:** Each script.js file containing page logic must be wrapped in the following code pattern.
+The name of the exported function must be unique and must not conflict with functions from other pages.
+
+```
+export async function CurrentDirectoryName() {
+    (ui screen logic)
+}
+```
+
+#### Module script.js
+
+Module code can be written in any form, but it’s strongly recommended to wrap it in a class or namespace to prevent naming collisions and side effects after scripts are bundled together.
+
+### 6. Alga.wwwcore Root Initialization and Usage Example in ASP.NET Core
+
+**Important:** To let the library determine which page interface to apply, you need to explicitly specify the path to the page directory. For example: /Pages/Home.
+
+```
+// Alga.wwwcore Root Initialization
+// --------------------------------
+// Registers the Alga.wwwcore.Root as a singleton service.
+// Initializes it with configuration from "AlgaWwwcoreConfig", logger instance, and environment mode.
+// Enables structured frontend generation and development-time support based on project config.
+
+builder.Services.AddSingleton<Alga.wwwcore.Root>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>().GetSection("AlgaWwwcoreConfig").Get<Alga.wwwcore.Models.Config>();
+    var logger  = sp.GetRequiredService<ILogger<Alga.wwwcore.Root>>();
+    var isDebug = sp.GetRequiredService<IHostEnvironment>().IsDevelopment();
+    return new Alga.wwwcore.Root(cfg, isDebug, logger);
+});
+
+app.MapGet(route, async (string pageDirectoryPath, Alga.wwwcore.Seo? seo = null, HttpContext context, Alga.wwwcore.Root www) =>
+{
+    context.Response.ContentType = "text/html; charset=utf-8";
+    context.Response.Headers.CacheControl = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
+
+    var writer = context.Response.BodyWriter;
+
+    try
     {
-        "title": "Bookmarks - RT.ink",
-        "description": "Your saved articles collection",
-        "robot": "noindex",
-        "modules": []
-    },
-    {
-        "title": "Trending News - RT.ink",
-        "description": "Most popular news right now",
-        "robot": "index,follow",
-        "modules": []
+        context.Response.StatusCode = 200;
+        www.WriteHtml(writer, pageDirectoryPath, seo);
+        await writer.FlushAsync();
     }
-    ]
-  }
-    ...
-}
-
+    catch (Exception ex)
+    {
+        context.Response.StatusCode = 500;
+        await context.Response.WriteAsync("Internal Server Error");
+    }
+}).CacheOutput(HOutputCachePolicy);
 ```
 
-schemes: здесь находится информация о структуре ваших страниц, 
-
-Запускаем ваш Alga.wwwcore, он позволяет комфортно работать в DEV режиме, и работать со струектурой кода так как вы ее видите. И в Release режиме, при каждом запуке в режиме DEBUG генерируется оптиизированный код который будет быстрее работать на сервере, то есть примменяется минификация, бандификация и прочиее поджодыю. Так же подготавливается PWA который позволит вам в последующем довольно легко превратить в Androin & iOS app. (SPA?)
-
-```
-builder.Services.AddSingleton(sp => new Root(sp.GetRequiredService<IOptions<Root.ConfigModel>>().Value, sp.GetRequiredService<IHttpContextAccessor>()));
-```
-
-Примеры вызова В asp core minial api
-
-```
-
-AppMapGet("/", "i");
-app.MapGet("/a/{urlShort}", async (Root www, IHttpClientFactory httpClientFactory) => await www.SendAsync("i", await i_seo(www.HttpContextAccessor.HttpContext, httpClientFactory, memoryCache)));
-AppMapGet("/bookmarks", "bookmarks");
-
-void AppMapGet(string route, string template) => app.MapGet(route, (Root www) => www.SendAsync(template));
-
-```
+### 7. Publication ```dotnet publish -c Release```
 
 
 
 
-5. About scheme.json
-
-```
-{
-    "title": "Main page",
-    "description": "About Main page",
-    "robot": "noindex",
-    "modules": [ 
-        { "path": "/Modules/ApiRtInk_MSAP", "toBundlerMinifier": true },
-        { "path": "/Modules/HeadHtmlBox", "toBundlerMinifier": true },
-        { "path": "/Modules/HeaderTextUI", "toBundlerMinifier": true },
-        { "path": "/Modules/FooterInfHtmlBox", "toBundlerMinifier": true },
-        { "path": "/Modules/ListGHtmlBox", "toBundlerMinifier": true },
-        { "path": "/Modules/MoreButtonUI", "toBundlerMinifier": true }
-        { "path": "/ExternalComponents/MomentjsCom/moment-timezone.min.js" }
-    ]
-}
-```
-
-title - The title (tag) of page that will be used in HEAD if not overridden
-description - The description (meta) of page that will be used in HEAD if not overridden
-robot - The <meta name="robots"> tag is an HTML element that provides instructions to search engine crawlers (or robots) about how to index and follow the links on a webpage.
-modules - List of paths to components that will be called by the script.js of page (UI Screen).This list also helps determine which components should be bundled & minify with script & css pages. If you do not want to specify the path to all files, specify the path to the directory and we will get the paths to javascript & css files
-
-
-
-
-
-### Publication
-
-Terminal command: ```dotnet publish -c Release -r win-x64 --force```
-
-
-
-
+## Additionally
 
 ### Create Android APP (TWA) using Bubblewrap
 
 Install bubblewrap: ```npm install -g @bubblewrap/cli```
-
-```bubblewrap build --clean```
-
-```keytool -genkeypair -v \
-  -keystore "/Users/xxx/Documents/Mask/Projects/RtInkGit/android.keystore" \
-  -alias android \
-  -keyalg RSA -keysize 2048 \
-  -validity 10000 \
-  -storepass "YourPass" \
-  -keypass "YourPass"```
-
-```bubblewrap update \
-  --keystore=/Users/xxx/Documents/Mask/Projects/RtInkGit/android.keystore \
-  --ks-pass="pass:YourPass" \
-  --key-pass="pass:YourPass"```
-
-
-```bubblewrap update --keystore=./android.keystore```
-
-```bubblewrap init --manifest https://your_site.com/manifest.json```
-
-```bubblewrap build```
-
-bubblewrap validate
-
-curl -I https://rt.ink/manifest.json
-
-
-Do you want Bubblewrap to install the JDK: Y (Yes)
-
-Do you want Bubblewrap to install the Android SDK: Y (Yes)
-
-------- ink.rt.twa
-
-
-
-
-
-### Logging
-
-A logging system with hints and error information was added to the project. Monitor them in the debug console.
-
-
-
-
-
-### Upates
-
-What has been changed in new build (4.0.0) compared to the previous version (3.2.3)
-
-- Removed BuildBundlerMinifier - deprecated. Added simplified and modern Bundler implementation + NUglify
-- General project settings are now recommended to be stored in appsettings.json
-- Now the application architecture can be designed more flexibly. Now it works like this: we look for directories where there is a scheme.json and consider that the files contained in them form the pages of the web application (user interface screen). Important: The names of the directories that contain scheme.json are unique names of your pages, which should not be repeated.
-- Added additional information to the documentation about setting up your ASP.NET that may be useful
-- SEO optimization tools have been returned
-- Changed the logic of building and storing http document, now its formation and transmission are carried out faster
-
-
-
-
-
-## ASP.NET Core Project
-
-An example of using Alga.wwwcore nuget package on a real ASP.NET Core project
-
-web: [https://git.rt.ink](https://git.rt.ink)
-git: [https://github.com/rtink-git/RtInkGit](https://github.com/rtink-git/RtInkGit/tree/main/RtInkGit/RtInkGit)
-
-
-
-
-
-## Additional settings
-
-1. Настройка .csproj - проекта asp где находятся ваши script & style файлы цель не отправлять файлы на сервер которые не будут на нем применяться и служат или для сборки проекта или в dev версии
-
-``` 
-<ItemGroup>
-    <Content Update="wwwroot/UISs/**/script.js" CopyToPublishDirectory="Never" />
-    <Content Update="wwwroot/UISs/**/style.css" CopyToPublishDirectory="Never" />
-    <Content Update="wwwroot/UISs/**/scheme.json" CopyToPublishDirectory="Never" />
-</ItemGroup>
-
-```
-
-
-
 
 
 ## Telegram mini app
@@ -700,9 +663,7 @@ var requestData = new
         }
     }
 };
-```
 
-```
 // Формируем клавиатуру с кнопкой WebApp - канал
 
 var requestData = new 
@@ -725,3 +686,27 @@ var requestData = new
     }
 };
 ```
+
+
+
+## Upates
+
+What has been changed in new build (4.0.4) compared to the previous version (3.2.3)
+
+- Fully refactored for performance and added comments. Changed the logic of building and storing http document, now its formation and transmission are carried out faster
+- Removed BuildBundlerMinifier - deprecated. Added simplified and modern Bundler implementation + NUglify
+- General project settings are now recommended to be stored in appsettings.json
+- Now the application architecture can be designed more flexibly. Now it works like this: we look for directories where there is a scheme.json and consider that the files contained in them form the pages of the web application (user interface screen).
+- Added additional information to the documentation about setting up your ASP.NET that may be useful
+- SEO optimization tools have been returned
+
+
+
+
+
+## ASP.NET Core Project
+
+An example of using Alga.wwwcore nuget package on a real ASP.NET Core project
+
+web: [https://git.rt.ink](https://git.rt.ink)
+git: [https://github.com/rtink-git/RtInkGit](https://github.com/rtink-git/RtInkGit/tree/main/RtInkGit/RtInkGit)

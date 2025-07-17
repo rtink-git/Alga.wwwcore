@@ -1,79 +1,44 @@
-### C# Library Ultimate .gitignore ###
-# Автосгенерировано для .NET 5+/Core/Standard проектов
-# Версия 2024.06
+# .NET build folders
+bin/
+obj/
 
-# 1. Основные игноры сборки
-bin/**/*
-obj/**/*
-
-*.exe
-*.dll
-*.pdb
-*.cache
-*.xml
-*.deps.json          # Специально для вашего случая
-*.staticwebassets.*
-*.runtimeconfig.*
-
-# 2. Настройки IDE
-.vs/                 # Visual Studio
-.idea/               # Rider
-.vscode/             # VS Code
-!*.sln               # Исключение для файлов решения
+# User-specific files
 *.user
 *.suo
-*.userprefs
-*.DotSettings
-*.sln.iml
-*.csproj.iml
+*.userosscache
+*.sln.docstates
 
-# 3. NuGet и зависимости
-[Nn]u[Gg]et/
-packages/
-**/packages/build/
-*.nupkg
-nuget.exe
-.nuget/
-project.lock.json
-artifacts/
+# Visual Studio Code
+.vscode/
 
-# 4. Тесты и покрытие кода
-[Tt]est[Rr]esult*/
-[Bb]uild[Ll]og.*
-*.trx
-coverage.xml
-*.coverage
-*.lcov
-
-# 5. Временные и системные файлы
-[Tt]humbs.db
-*.tmp
-*.temp
+# Build results
+*.dll
+*.exe
+*.app
+*.pdb
+*.cache
+*.mdb
 *.log
-*.swp
-*.swo
-*.vspscc
-*.vssscc
-.DS_Store
-*.bak
-*.bk
 
-# 6. Специфичные для .NET Core
-launchSettings.json
-appsettings.*.json   # Все конфиги кроме основного
-**/wwwroot/lib/      # Локальные библиотеки
-.history/            # История dotnet CLI
-.dotnet/
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+packages/
 
-# 7. Документация и прочее
-doc/_site/
-*.chm
-*.docstates
+# Rider & JetBrains IDEs
+.idea/
 
-# 8. Docker и развертывание
-.dockerignore
-Dockerfile
-docker-compose.*
-local.settings.json
+# VS for Mac
+*.pidb
+*.ide
 
-### Конец файла ###
+# Others
+*.db
+*.DS_Store
+*.Thumbs.db
+
+# Resharper / dotCover
+_ReSharper*/
+*.DotSettings.user
+.idea/
