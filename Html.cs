@@ -44,16 +44,20 @@ class Html
     const string _startTags = "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\">";
 
     // Streams a fully‑assembled HTML page to the provided <paramref name="writer"
-    public void WriteTo(IBufferWriter<byte> writer, string pagePath, Models.SchemeJsonM pageVal, FrozenDictionary<string, HashSet<string>>? pageModulesVal = null, Seo? seoM = null)
+    public void WriteTo(IBufferWriter<byte> writer, Models.SchemeJsonM pageVal, FrozenDictionary<string, HashSet<string>>? pageModulesVal = null, Models.Seo? seoM = null)
     {
-        seoM = seoM ?? new Seo(pageVal.title ?? "", "", pageVal.description, pageVal.robot);
+        if (seoM == null) seoM = new Models.Seo();
+        if (seoM.Title == null) seoM.Title = pageVal.title;
+        if (seoM.Description == null) seoM.Description = pageVal.description;
+        if (seoM.Robot == null) seoM.Robot = pageVal.robots;
+        if (seoM.Path == null) seoM.Path = pageVal.path;
 
         var sw = new StringBuilder(4096);
         sw.Append(_documentTag);
         sw.Append($"<html lang=\"{_config.Lang}\">");
         sw.Append(_startTags);
 
-        sw.Append(seoM?.MergeTags(_config));
+        sw.Append(new Seo(seoM).MergeTags(_config)); // seoM?.MergeTags(_config));
 
         if (_config.PreconnectUrls?.Count > 0)
             foreach (var url in _config.PreconnectUrls)
@@ -106,18 +110,17 @@ class Html
 
     // Returns the rendered HTML as a ReadOnlyMemory<byte>
     public ReadOnlyMemory<byte> GetBytes(
-        string pagePath,
         SchemeJsonM pageVal,
         FrozenDictionary<string, HashSet<string>>? pageModulesVal = null,
-        Seo? seo = null)
+        Models.Seo? seo = null)
     {
         var writer = new ArrayBufferWriter<byte>(2048); // Pre-allocate reasonable size
-        WriteTo(writer, pagePath, pageVal, pageModulesVal, seo);
+        WriteTo(writer, pageVal, pageModulesVal, seo);
         return writer.WrittenMemory;
     }
 
     // Create <link rel="icon"> tag
-    static string IconLinkHtml(int size, string rel = "icon") => $"<link rel=\"{rel}\" href=\"/Modules/Total/content/Icon-{size}.png\" sizes=\"{size}x{size}\" type=\"image/png\" alt=\"RT.ink Icon\">";
+    static string IconLinkHtml(int size, string rel = "icon") => $"<link rel=\"{rel}\" href=\"/Modules/Total/content/Icon-{size}.png\" sizes=\"{size}x{size}\" type=\"image/png\">";
 
     // Create CSS <link> tag with preload hack.
     static string LinkHtml(string url) => $"<link rel=\"stylesheet\" href=\"{url}\" as=\"style\" onload=\"this.rel='stylesheet'\" />";

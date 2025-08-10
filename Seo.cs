@@ -4,17 +4,7 @@ using System.Runtime.CompilerServices;
 namespace Alga.wwwcore;
 
 // Immutable holder for SEO metadata that emits HTML tags & JSON-LD
-public readonly record struct Seo(
-    string Title,
-    string Url,
-    string? Description = null,
-    string? Robot = null,
-    string? UrlCanonical = null,
-    string? ImageUrl = null,
-    int? ImageWidth = 0,
-    int? ImageHeight = 0,
-    string? Lang = null,
-    DateTime? DatePublished = null)
+public sealed class Seo(Models.Seo model)
 {
     private const int JsonLdCapacity = 512;
     
@@ -24,37 +14,39 @@ public readonly record struct Seo(
         var sb = new StringBuilder(2048);
 
         // robots
-        AppendMeta(sb, "robots", Robot);
+        AppendMeta(sb, "robots", model.Robot ?? "noindex, nofollow");
 
         // canonical
-        if (!string.IsNullOrEmpty(UrlCanonical))
-            sb.Append($"<link rel=\"canonical\" href=\"{config.Url}{UrlCanonical}\" />");
+        var url = $"{config.Url}{model.Path}";
+        var urlC = model.UrlCanonical == null ? url : model.UrlCanonical;
+
+        sb.Append($"<link rel=\"canonical\" href=\"{urlC}\" />");
 
         // title
-        if (!string.IsNullOrEmpty(Title))
-            sb.Append("<title>").Append(Title).Append("</title>");
+        if (!string.IsNullOrEmpty(model.Title))
+            sb.Append("<title>").Append(model.Title).Append("</title>");
 
         // description
-        AppendMeta(sb, "description", Description);
+        AppendMeta(sb, "description", model.Description);
 
         // Build full image URL once
-        string? imgFull = ImageUrl is { Length: >0 } img && img[0] == '/'
+        string? imgFull = model.ImageUrl is { Length: >0 } img && img[0] == '/'
             ? string.Concat(config.Url, img)
-            : ImageUrl;
+            : model.ImageUrl;
 
         // — Open Graph —
         AppendOG(sb, "article", "og:type");
-        AppendOG(sb, Url, "og:url");
-        AppendOG(sb, Title, "og:title");
-        AppendOG(sb, Description, "og:description");
+        AppendOG(sb, url, "og:url");
+        AppendOG(sb, model.Title, "og:title");
+        AppendOG(sb, model.Description, "og:description");
         AppendOG(sb, config.Name, "og:site_name");
-        AppendOG(sb, config.Lang ?? Lang, "og:locale");
+        AppendOG(sb, config.Lang ?? model.Lang, "og:locale");
         
         if (imgFull is not null)
         {
             AppendOG(sb, imgFull, "og:image");
-            AppendOG(sb, $"{Title} Image", "og:image:alt");
-            if (ImageWidth is >0 and int w && ImageHeight is >0 and int h)
+            AppendOG(sb, $"{model.Title} Image", "og:image:alt");
+            if (model.ImageWidth is >0 and int w && model.ImageHeight is >0 and int h)
             {
                 AppendOG(sb, w.ToString(), "og:image:width");
                 AppendOG(sb, h.ToString(), "og:image:height");
@@ -63,44 +55,44 @@ public readonly record struct Seo(
 
         // — Twitter —
         AppendMeta(sb, "twitter:card", "summary_large_image");
-        AppendMeta(sb, "twitter:title", Title);
-        AppendMeta(sb, "twitter:url", Url);
-        AppendMeta(sb, "twitter:description", Description);
+        AppendMeta(sb, "twitter:title", model.Title);
+        AppendMeta(sb, "twitter:url", url);
+        AppendMeta(sb, "twitter:description", model.Description);
         AppendMeta(sb, "twitter:site", config.TwitterSite);
         
         if (imgFull is not null)
         {
             AppendMeta(sb, "twitter:image", imgFull);
-            AppendMeta(sb, "twitter:image:alt", $"{Title} Image");
+            AppendMeta(sb, "twitter:image:alt", $"{model.Title} Image");
         }
 
         // — JSON-LD —
-        string typeJsonLD = Url.AsSpan().TrimEnd('/').SequenceEqual(config.Url.AsSpan())
+        string typeJsonLD = url.AsSpan().TrimEnd('/').SequenceEqual(config.Url.AsSpan())
             ? "WebSite"
             : "WebPage";
 
         var jsonSb = new StringBuilder(JsonLdCapacity);
         jsonSb.Append("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",");
         jsonSb.Append("\"@type\":\"").Append(typeJsonLD).Append("\",");
-        jsonSb.Append("\"url\":\"").Append(Url).Append("\",");
-        jsonSb.Append("\"name\":\"").Append(Title).Append('\"');
+        jsonSb.Append("\"url\":\"").Append(url).Append("\",");
+        jsonSb.Append("\"name\":\"").Append(model.Title).Append('\"');
         
-        if (!string.IsNullOrEmpty(Description))
-            jsonSb.Append(",\"description\":\"").Append(Description).Append('\"');
+        if (!string.IsNullOrEmpty(model.Description))
+            jsonSb.Append(",\"description\":\"").Append(model.Description).Append('\"');
         
-        if (DatePublished is DateTime date)
+        if (model.DatePublished is DateTime date)
             jsonSb.Append(",\"datePublished\":\"").Append(date.ToString("yyyy-MM-dd")).Append('\"');
         
-        if (imgFull is not null && ImageWidth > 0 && ImageHeight > 0)
+        if (imgFull is not null && model.ImageWidth > 0 && model.ImageHeight > 0)
         {
             jsonSb.Append(",\"image\":{\"@type\":\"ImageObject\",\"url\":\"")
                 .Append(imgFull)
                 .Append("\",\"width\":\"")
-                .Append(ImageWidth.Value)
+                .Append(model.ImageWidth.Value)
                 .Append("\",\"height\":\"")
-                .Append(ImageHeight.Value)
+                .Append(model.ImageHeight.Value)
                 .Append("\",\"caption\":\"")
-                .Append(Title)
+                .Append(model.Title)
                 .Append(" Image\"}");
         }
         

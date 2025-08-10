@@ -28,6 +28,7 @@ public class Root
     public Root(Models.Config? config = null, bool isDebug = false, ILogger? logger = null)
     {
         ConfigM = config ?? throw new ArgumentNullException(nameof(config));
+        ConfigM.Url = config.Url.Trim('/');
         ConfigM.IsDebug = isDebug;
         ConfigM.CurrentVersion = DateTime.UtcNow.ToString("yyyyMMddHHmm");
         _Logger = logger;
@@ -41,7 +42,7 @@ public class Root
         // This works if the page SEO is generated from scheme.json, if you generate seo pages yourself (for example, the query parameters have changed) the html page is not generated on the fly with additional allocations
 
         foreach (var i in schemes.Pages)
-            i.Value.html = (new Html(ConfigM).GetBytes(i.Key, i.Value, schemes.PagesModules, null)).ToArray();
+            i.Value.html = (new Html(ConfigM).GetBytes(i.Value, schemes.PagesModules, null)).ToArray();
 
         new ManifestJson(this.ConfigM).Build();
         new AppJs(ConfigM).Create();
@@ -51,11 +52,18 @@ public class Root
         PageModules = schemes.PagesModules;
     }
 
-    //
+    public byte[] SitemapWriteXML()
+    {
+        var sitemap = new Sitemap();
+        using var ms = new MemoryStream();
+        return sitemap.Build(Collections.VisitedUrlsMap); // если Build умеет писать в Stream
+    }
 
-    public void WriteHtml(IBufferWriter<byte> writer, string UISName, Seo? seoM = null)
+    public void WriteHtml(IBufferWriter<byte> writer, string UISName, string path, Models.Seo? seoM = null)
     {
         if (Pages == null || !Pages.TryGetValue(UISName, out var pageVal)) return;
+
+        RegisterUrlVisit(path, pageVal, seoM);
 
         if (seoM == null)
         {
@@ -63,6 +71,17 @@ public class Root
             return;
         }
 
-        _htmlGen.WriteTo(writer, UISName, pageVal, PageModules, seoM);
+        _htmlGen.WriteTo(writer, pageVal, PageModules, seoM);
+    }
+
+    void RegisterUrlVisit(string path, Models.SchemeJsonM pageVal, Models.Seo? seoM = null)
+    {
+        var robots = seoM?.Robot ?? pageVal.robots;
+        if (robots == null || robots.Contains("noindex")) return;
+
+        var url = seoM?.UrlCanonical != null ? seoM.UrlCanonical : ConfigM.Url + path;
+
+
+        Collections.VisitedUrlsMap.TryAdd(url, new() { Lastmod = seoM?.DatePublished != null ? seoM.DatePublished : null });
     }
 }

@@ -535,11 +535,14 @@ wwwroot/
 scheme.json is a required file that defines the structure and metadata of a page. It can be located anywhere within the wwwroot directory.
 The library automatically scans the entire wwwroot for scheme.json files and uses their locations to identify the directories that contain scripts and styles for application pages. These directories are then treated as individual pages in the application.
 
+Some parameters are used to form SEO tags in the header
+
 ```
 {
   "title": "DefaultApp - Welcome to Your Starter Page",
   "description": "This is a sample starter page for your web application. Customize it with your own content, components, and branding.",
   "robot": "noindex",
+  "path": "/about"
   "modules": [
     "/Modules/LayoutShell",
     "/Modules/UserAuth",
@@ -588,6 +591,9 @@ Module code can be written in any form, but it’s strongly recommended to wrap 
 
 **Important:** To let the library determine which page interface to apply, you need to explicitly specify the path to the page directory. For example: /Pages/Home.
 
+You can pass seo parameters using Alga.wwwcore.Models.Seo? seoModel. If the path does not have changeable parameters, we recommend adding seo parameters inside scheme.json and not using Alga.wwwcore.Models.Seo - which speeds up the delivery of the already formed page to the client
+
+
 ```
 // Alga.wwwcore Root Initialization
 // --------------------------------
@@ -603,25 +609,110 @@ builder.Services.AddSingleton<Alga.wwwcore.Root>(sp =>
     return new Alga.wwwcore.Root(cfg, isDebug, logger);
 });
 
-app.MapGet(route, async (string pageDirectoryPath, Alga.wwwcore.Seo? seo = null, HttpContext context, Alga.wwwcore.Root www) =>
-{
-    context.Response.ContentType = "text/html; charset=utf-8";
-    context.Response.Headers.CacheControl = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
+string CacheControlValue = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
+string UiPrefix = "/UISs/";
+byte[] ErrorBytes = "Internal Server Error"u8.ToArray();
 
-    var writer = context.Response.BodyWriter;
+AppMapGet("/", "i");
+app.MapGet("/a/{search}", async (HttpContext context, Alga.wwwcore.Root www, IHttpClientFactory? httpClientFactory, IMemoryCache cache) => WriteMapGet("i", context, www, await GetArticleSeoData(context, httpClientFactory, cache))).CacheOutput(HOutputCachePolicy);
+AppMapGet("/about", "about");
+AppMapGet("/access", "access");
+AppMapGet("/app", "app");
+AppMapGet("/bookmarks", "bookmarks");
+AppMapGet("/error", "Error");
+AppMapGet("/error/{code}", "Error");
+app.MapGet("/i/{search}", async (HttpContext context, Alga.wwwcore.Root www, IHttpClientFactory? httpClientFactory, IMemoryCache cache) => WriteMapGet("i", context, www, await GetArticleSeoData(context, httpClientFactory, cache))).CacheOutput(HOutputCachePolicy);
+AppMapGet("/locs", "Locs");
+AppMapGet("/offline", "offline");
+AppMapGet("/privacy", "Privacy");
+AppMapGet("/settings", "Settings");
+AppMapGet("/terms", "Terms");
+app.MapGet("/u/{login-search}", async (HttpContext context, Alga.wwwcore.Root www, IHttpClientFactory? httpClientFactory, IMemoryCache cache) => WriteMapGet("u", context, www, await GetUserSeoData(context, httpClientFactory, cache))).CacheOutput(HOutputCachePolicy);
+AppMapGet("/users", "users");
+
+void AppMapGet(string route, string template) => app.MapGet(route, (HttpContext context, Alga.wwwcore.Root www) => WriteMapGet(template, context, www)).CacheOutput(HOutputCachePolicy);
+
+void WriteMapGet(string template, HttpContext context, Alga.wwwcore.Root www, Alga.wwwcore.Models.Seo? seoModel = null)
+{
+    var response = context.Response;
 
     try
     {
-        context.Response.StatusCode = 200;
-        www.WriteHtml(writer, pageDirectoryPath, seo);
-        await writer.FlushAsync();
+        var headers = response.Headers;
+        headers.ContentType = "text/html; charset=utf-8";
+        headers.CacheControl = CacheControlValue;
+        response.StatusCode = StatusCodes.Status200OK;
+
+        var writer = response.BodyWriter;
+
+        var fullPath = string.Create(UiPrefix.Length + template.Length, (UiPrefix, template), static (span, state) =>
+        {
+            state.UiPrefix.AsSpan().CopyTo(span);
+            state.template.AsSpan().CopyTo(span[state.UiPrefix.Length..]);
+        });
+
+        www.WriteHtml(writer, fullPath, context.Request.Path, seoModel);
+
+        _ = writer.FlushAsync();
     }
-    catch (Exception ex)
+    catch
     {
-        context.Response.StatusCode = 500;
-        await context.Response.WriteAsync("Internal Server Error");
+        response.StatusCode = StatusCodes.Status500InternalServerError;
+        var writer = response.BodyWriter;
+        writer.Write(ErrorBytes);
+        _ = writer.FlushAsync();
     }
-}).CacheOutput(HOutputCachePolicy);
+}
+
+// Starting from version 4.1.0, it is now possible to automatically generate and deliver sitemap.xml directly via a link.
+// How it works: all paths requested by clients are stored in memory. When the route for retrieving the XML sitemap is requested, the system accesses the stored data to obtain the list of URLs, generates the sitemap on the fly, and immediately sends it to the client.
+
+
+app.MapGet("/sitemap.xml", async (HttpContext context, Alga.wwwcore.Root www) =>
+{
+    var bytes = www.SitemapWriteXML();
+    context.Response.ContentType = "application/xml; charset=utf-8";
+    context.Response.ContentLength = bytes.Length;
+    await context.Response.Body.WriteAsync(bytes);
+});
+
+await app.RunAsync();
+
+async Task<Alga.wwwcore.Models.Seo?> GetArticleSeoData(HttpContext? context, IHttpClientFactory? httpClientFactory, IMemoryCache cache)
+{
+    if (context == null || httpClientFactory == null) return null;
+
+    string[] pathSplit = context.Request.Path.Value?.Split('/') ?? [];
+    if (pathSplit.Length < 3) return null;
+
+    string fullUrl = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}";
+    string url = $"{RtInk.Constants.UrlApi}/WebApp/Article/SEO_c?search={pathSplit[2]}";
+    string cacheKey = GetCacheKey(url);
+
+    if (cache?.TryGetValue(cacheKey, out Alga.wwwcore.Models.Seo? cachedSeo) == true) return cachedSeo;
+
+    var httpClient = httpClientFactory.CreateClient("SeoClient");
+
+    try
+    {
+        var m = await httpClient.GetFromJsonAsync<ArticleSEOModel>(url);
+        var seoM = new Alga.wwwcore.Models.Seo
+        {
+            Title = $"{m.title} | RT.ink",
+            Description = m.description?.Replace("\"", "'"),
+            UrlCanonical = $"https://rt.ink/i/{pathSplit[2]}",
+            ImageUrl = m.extension is not null ? $"https://api.rt.ink/f/{m.id}.{m.extension}" : null,
+            ImageWidth = m.width ?? 0,
+            ImageHeight = m.height ?? 0,
+            Lang = m.lang ?? "en",
+            DatePublished = m.datePublished
+        };
+
+        cache?.Set(cacheKey, seoM, TimeSpan.FromMinutes(5));
+        return seoM;
+    }
+    catch { return null; }
+}
 ```
 
 ### 7. Publication ```dotnet publish -c Release```
@@ -688,14 +779,9 @@ var requestData = new
 
 ## Upates
 
-What has been changed in new build (4.0.4) compared to the previous version (3.2.3)
+What has been changed in new build (4.1.0) compared to the previous version (4.0.4)
 
-- Fully refactored for performance and added comments. Changed the logic of building and storing http document, now its formation and transmission are carried out faster
-- Removed BuildBundlerMinifier - deprecated. Added simplified and modern Bundler implementation + NUglify
-- General project settings are now recommended to be stored in appsettings.json
-- Now the application architecture can be designed more flexibly. Now it works like this: we look for directories where there is a scheme.json and consider that the files contained in them form the pages of the web application (user interface screen).
-- Added additional information to the documentation about setting up your ASP.NET that may be useful
-- SEO optimization tools have been returned
+- it is now possible to automatically generate and deliver sitemap.xml directly via a link. How it works: all paths requested by clients are stored in memory. When the route for retrieving the XML sitemap is requested, the system accesses the stored data to obtain the list of URLs, generates the sitemap on the fly, and immediately sends it to the client.
 
 
 

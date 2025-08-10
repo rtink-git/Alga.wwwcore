@@ -1,77 +1,60 @@
-## .NET Core / .NET 5+ / .NET 6–9 ##
+## Сборочные каталоги
 bin/
 obj/
+out/
+
+## Папки Visual Studio
+.vs/
+.vscode/
 *.user
 *.suo
 *.userosscache
 *.sln.docstates
-*.vs/
 
-# Build results
+## Конфигурации
 *.dll
 *.exe
-*.app
-*.log
-*.cache
 *.pdb
+*.cache
 *.mdb
-*.xml
-*.deps.json
-*.runtimeconfig.json
+*.log
 
-# NuGet packages
-*.nupkg
-*.snupkg
-packages/
-*.nuspec
-
-# Visual Studio Code
-.vscode/
-
-# Rider
-.idea/
-
-# ReSharper
-_ReSharper*/
-*.DotSettings.user
-
-# Local test results
+## Файлы тестов и покрытия
 TestResults/
 *.coverage
 *.coveragexml
-*.trx
-
-# Global.json user-local SDK settings
-global.json.user
-
-# Dotnet CLI tool restore cache
-.dotnet_tool/
-
-# Mac
-.DS_Store
-
-# Windows
-Thumbs.db
-desktop.ini
-
-# Logs
 *.log
 
-# Temporary
+## Файлы временных пакетов NuGet
+*.nupkg
+*.snupkg
+*.nuspec
+packages/
+.nuget/
+project.lock.json
+project.assets.json
+PackageArtifacts/
+
+## Папка результатов публикации
+publish/
+*.publish.xml
+
+## Бэкапы и временные файлы
 *.tmp
 *.bak
-*.swp
+*.old
+*.orig
 
-# Paket
-.paket/
-paket-files/
+## Кэш Rider/Resharper
+.idea/
+*.DotSettings.user
+_ReSharper*/
+resharper-host/
 
-# JetBrains Rider User-specific
-*.sln.iml
+## OS-specific
+.DS_Store
+Thumbs.db
 
-# Optional: если используешь GitVersion
-GitVersion.yml
-.gitversion
-
-# Optional: если используешь GitHub Actions
-*.code-workspace
+## Secrets или user-specific
+secrets.json
+appsettings.Development.json

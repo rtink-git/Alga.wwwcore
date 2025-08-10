@@ -9,7 +9,7 @@ public class Config
     internal string CurrentVersion { get; set; } = string.Empty;
     // The base URL of the application depending on the build mode.
     // Example: "https://localhost:1234" (for dev) or "https://example.com" (for prod).
-    internal string Url { get; set; } = string.Empty;
+    public string Url { get; set; } = string.Empty;
 
     // Indicates whether the app is running in debug mode.
     // true = development, false = production.
