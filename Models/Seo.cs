@@ -1,4 +1,5 @@
 namespace Alga.wwwcore.Models;
+
 public sealed class Seo
 {
     public string? Title { get; set; }
@@ -11,4 +12,5 @@ public sealed class Seo
     public int? ImageHeight { get; set; }
     public string? Lang { get; set; }
     public DateTime? DatePublished { get; set; }
+    public string? SchemaType { get; set; } // https://schema.org type
 }

@@ -42,7 +42,7 @@ public class Root
         // This works if the page SEO is generated from scheme.json, if you generate seo pages yourself (for example, the query parameters have changed) the html page is not generated on the fly with additional allocations
 
         foreach (var i in schemes.Pages)
-            i.Value.html = (new Html(ConfigM).GetBytes(i.Value, schemes.PagesModules, null)).ToArray();
+            i.Value.html = new Html(ConfigM).GetBytes(i.Value, schemes.PagesModules, null).ToArray();
 
         new ManifestJson(this.ConfigM).Build();
         new AppJs(ConfigM).Create();

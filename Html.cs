@@ -46,11 +46,19 @@ class Html
     // Streams a fully‑assembled HTML page to the provided <paramref name="writer"
     public void WriteTo(IBufferWriter<byte> writer, Models.SchemeJsonM pageVal, FrozenDictionary<string, HashSet<string>>? pageModulesVal = null, Models.Seo? seoM = null)
     {
-        if (seoM == null) seoM = new Models.Seo();
-        if (seoM.Title == null) seoM.Title = pageVal.title;
-        if (seoM.Description == null) seoM.Description = pageVal.description;
-        if (seoM.Robot == null) seoM.Robot = pageVal.robots;
-        if (seoM.Path == null) seoM.Path = pageVal.path;
+        if (seoM == null)
+        {
+            seoM = new Models.Seo();
+            seoM.Title = pageVal.title;
+            seoM.Description = pageVal.description;
+            seoM.Robot = pageVal.robots;
+            seoM.Path = pageVal.path;
+            seoM.SchemaType = pageVal.schemaType;
+        }
+        else
+        {
+            if (seoM.Robot == null) seoM.Robot = pageVal.robots;
+        }
 
         var sw = new StringBuilder(4096);
         sw.Append(_documentTag);
@@ -73,28 +81,38 @@ class Html
         sw.Append(_iconLink32);
         sw.Append(_iconLinkApple);
 
-        if (_googleAnalitysScript != null)
-            sw.Append(_googleAnalitysScript);
-
-        if(_yandexMetrikaScripts != null)
-            sw.Append(_yandexMetrikaScripts);
-
-        if(_telegramScript != null)
-            sw.Append(_telegramScript);
-
-        if (_msgPackScript != null)
-            sw.Append(_msgPackScript);
+        var sbw = new StringBuilder(4096);
 
         if (_config.IsDebug && pageModulesVal is not null && pageVal.modules is not null)
             foreach (var j in pageVal.modules)
                 if (pageModulesVal.TryGetValue(j, out var val))
                     foreach (var u in val)
-                        sw.Append(u.EndsWith(".css", StringComparison.OrdinalIgnoreCase) ? LinkHtml(u) : ScriptHtml(u));
+                        if (u.EndsWith(".css", StringComparison.OrdinalIgnoreCase))
+                        {
+                            sw.Append(LinkHtml(u));
+                        }
+                        else if (u.EndsWith(".js", StringComparison.OrdinalIgnoreCase))
+                        {
+                            //slw.Append(PreloadLinkAsScript(u));
+                            sbw.Append(ScriptHtml(u));
+                        }
 
         if (!string.IsNullOrWhiteSpace(pageVal.style)) sw.Append(LinkHtml(pageVal.style));
-        if (!string.IsNullOrWhiteSpace(pageVal.script)) sw.Append(ScriptImportHtml(pageVal.script));
+        if (!string.IsNullOrWhiteSpace(pageVal.script))
+        {
+            //slw.Append(PreloadLinkAsScript(pageVal.script));
+            sbw.Append(ScriptImportHtml(pageVal.script));
+        }
 
-        sw.Append(_themeColorMeta);
+        if (_msgPackScript != null) sw.Append(_msgPackScript);
+        
+        sw.Append(sbw);
+
+        if (_telegramScript != null) sw.Append(_telegramScript);
+        if (_googleAnalitysScript != null) sw.Append(_googleAnalitysScript);
+        if(_yandexMetrikaScripts != null) sw.Append(_yandexMetrikaScripts);
+
+        sw.Append(_themeColorMeta);            
         sw.Append(_finishTags);
 
         foreach (ReadOnlyMemory<char> chunk in sw.GetChunks())
@@ -126,7 +144,8 @@ class Html
     static string LinkHtml(string url) => $"<link rel=\"stylesheet\" href=\"{url}\" as=\"style\" onload=\"this.rel='stylesheet'\" />";
 
     // Create <link rel="preconnect">
-    static string PreconnectLink(string url, bool isCrossorigin = false) => ("<link rel=\"preconnect\" href=\"" + url + "\" " + (isCrossorigin ? "crossorigin" : "") + ">");
+    static string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + (isCrossorigin ? "crossorigin" : "") + ">";
+    static string PreloadLinkAsScript(string url) => "<link rel=\"preload\" href=\"" + url + "\" as=\"script\">";
 
     // Generate inline ES‑Module import wrapper
     static string ScriptImportHtml(string path)

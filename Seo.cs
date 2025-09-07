@@ -17,10 +17,12 @@ public sealed class Seo(Models.Seo model)
         AppendMeta(sb, "robots", model.Robot ?? "noindex, nofollow");
 
         // canonical
-        var url = $"{config.Url}{model.Path}";
-        var urlC = model.UrlCanonical == null ? url : model.UrlCanonical;
 
-        sb.Append($"<link rel=\"canonical\" href=\"{urlC}\" />");
+        var url = $"{config.Url}{model.Path}";
+        //var urlC = model.UrlCanonical == null ? url : $"{config.Url}{model.UrlCanonical}";
+
+        if(model.UrlCanonical != null && model.UrlCanonical != model.Path)
+            sb.Append($"<link rel=\"canonical\" href=\"{config.Url}{model.UrlCanonical}\" />");
 
         // title
         if (!string.IsNullOrEmpty(model.Title))
@@ -66,38 +68,41 @@ public sealed class Seo(Models.Seo model)
             AppendMeta(sb, "twitter:image:alt", $"{model.Title} Image");
         }
 
-        // — JSON-LD —
-        string typeJsonLD = url.AsSpan().TrimEnd('/').SequenceEqual(config.Url.AsSpan())
-            ? "WebSite"
-            : "WebPage";
-
-        var jsonSb = new StringBuilder(JsonLdCapacity);
-        jsonSb.Append("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",");
-        jsonSb.Append("\"@type\":\"").Append(typeJsonLD).Append("\",");
-        jsonSb.Append("\"url\":\"").Append(url).Append("\",");
-        jsonSb.Append("\"name\":\"").Append(model.Title).Append('\"');
-        
-        if (!string.IsNullOrEmpty(model.Description))
-            jsonSb.Append(",\"description\":\"").Append(model.Description).Append('\"');
-        
-        if (model.DatePublished is DateTime date)
-            jsonSb.Append(",\"datePublished\":\"").Append(date.ToString("yyyy-MM-dd")).Append('\"');
-        
-        if (imgFull is not null && model.ImageWidth > 0 && model.ImageHeight > 0)
+        if (model.SchemaType != null)
         {
-            jsonSb.Append(",\"image\":{\"@type\":\"ImageObject\",\"url\":\"")
-                .Append(imgFull)
-                .Append("\",\"width\":\"")
-                .Append(model.ImageWidth.Value)
-                .Append("\",\"height\":\"")
-                .Append(model.ImageHeight.Value)
-                .Append("\",\"caption\":\"")
-                .Append(model.Title)
-                .Append(" Image\"}");
+            // — JSON-LD —
+            // string typeJsonLD = url.AsSpan().TrimEnd('/').SequenceEqual(config.Url.AsSpan())
+            //     ? "WebSite"
+            //     : "WebPage";
+
+            var jsonSb = new StringBuilder(JsonLdCapacity);
+            jsonSb.Append("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",");
+            jsonSb.Append("\"@type\":\"").Append(model.SchemaType).Append("\",");
+            jsonSb.Append("\"url\":\"").Append(url).Append("\",");
+            jsonSb.Append("\"name\":\"").Append(model.Title).Append('\"');
+
+            if (!string.IsNullOrEmpty(model.Description))
+                jsonSb.Append(",\"description\":\"").Append(model.Description).Append('\"');
+
+            if (model.DatePublished is DateTime date)
+                jsonSb.Append(",\"datePublished\":\"").Append(date.ToString("yyyy-MM-dd")).Append('\"');
+
+            if (imgFull is not null && model.ImageWidth > 0 && model.ImageHeight > 0)
+            {
+                jsonSb.Append(",\"image\":{\"@type\":\"ImageObject\",\"url\":\"")
+                    .Append(imgFull)
+                    .Append("\",\"width\":\"")
+                    .Append(model.ImageWidth.Value)
+                    .Append("\",\"height\":\"")
+                    .Append(model.ImageHeight.Value)
+                    .Append("\",\"caption\":\"")
+                    .Append(model.Title)
+                    .Append(" Image\"}");
+            }
+
+            jsonSb.Append("}</script>");
+            sb.Append(jsonSb);
         }
-        
-        jsonSb.Append("}</script>");
-        sb.Append(jsonSb);
 
         return sb.ToString();
     }
