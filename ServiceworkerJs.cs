@@ -9,18 +9,19 @@ class ServiceworkerJs
     {
       var toCacheList = new HashSet<string>();
 
-      foreach (var i in schemes)
-      {
-        if (i.Value.script != null) toCacheList.Add(i.Value.script);
-        if (i.Value.style != null) toCacheList.Add(i.Value.style);
-        // if (i.Value.modules != null)
-        //   foreach (var j in i.Value.modules)
-        //   {
-        //     if (modules.TryGetValue(j, out var val))
-        //       foreach (var u in val)
-        //         toCacheList.Add(u);
-        //   }
-      }
+      if(schemes != null)
+        foreach (var i in schemes)
+        {
+          if (i.Value.script != null) toCacheList.Add(i.Value.script);
+          if (i.Value.style != null) toCacheList.Add(i.Value.style);
+          // if (i.Value.modules != null)
+          //   foreach (var j in i.Value.modules)
+          //   {
+          //     if (modules.TryGetValue(j, out var val))
+          //       foreach (var u in val)
+          //         toCacheList.Add(u);
+          //   }
+        }
 
       if (config?.cacheUrls != null)
         foreach (var i in config.cacheUrls)
@@ -33,9 +34,9 @@ class ServiceworkerJs
 
       var array = string.Join(",", new[] { "'" + "/" + "'" }.Concat(toCacheList.Select(i => $"'{i}'")));
 
-      var cacheName = $"RTSWStaticCache-{config?.CurrentVersion}";
+      var cacheName = $"SWStaticCache-{config?.CurrentVersion}";
 
-            string code = $@"
+      string code = $@"
 const CACHE_NAME = '{cacheName}';
 const URLs_TO_CACHE = [{array}];
 const OFFLINE_PAGE = '/offline';
@@ -118,9 +119,12 @@ self.addEventListener('fetch', (event) => {{
         }}
 
         try {{
-            const networkResponse = await fetch(req);
-            if(![403, 404, 408, 500].includes(networkResponse.status)) await cache.put(req, networkResponse.clone()).catch(e => {{ console.error('Ошибка сохранения в кеш:', e); }});
-            return networkResponse;
+          const networkResponse = await fetch(req);
+          const cacheControl = networkResponse.headers.get('Cache-Control');
+          if (networkResponse.status === 200 && !cacheControl?.includes('no-store')) {{
+              await cache.put(req, networkResponse.clone()).catch(e => {{ console.error('Ошибка сохранения в кеш:', e); }});
+          }}
+          return networkResponse;
         }} catch (e) {{ 
             console.warn('[ServiceWorker] Сетевая ошибка:', e);
 

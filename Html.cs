@@ -34,10 +34,12 @@ class Html
         if (!string.IsNullOrEmpty(_config.YandexMetrikaCode))
             _yandexMetrikaScripts = YandexMetrikaScripts(_config.YandexMetrikaCode);
         if (_config.UseMessagePack)
-            _msgPackScript = "<script src=\"https://unpkg.com/msgpack-lite@0.1.26/dist/msgpack.min.js\" defer></script>";
+            _msgPackScript = "<script src=\"https://cdn.jsdelivr.net/npm/@msgpack/msgpack@2.8.0/dist.es5+umd/msgpack.min.js\"></script>";
         if (_config.UseTelegram)
             _telegramScript = "<script src=\"https://telegram.org/js/telegram-web-app.js\" crossorigin=\"anonymous\" defer></script>";
     }
+
+    //_msgPackScript = "<script src=\"https://unpkg.com/msgpack-lite@0.1.26/dist/msgpack.min.js\" defer></script>";
 
     const string _documentTag = "<!DOCTYPE html>";
     const string _finishTags = "<link rel=\"manifest\" href=\"/manifest.json\"><script src=\"/app.js\" defer></script></head><body></body></html>";
@@ -55,10 +57,9 @@ class Html
             seoM.Path = pageVal.path;
             seoM.SchemaType = pageVal.schemaType;
         }
-        else
-        {
-            if (seoM.Robot == null) seoM.Robot = pageVal.robots;
-        }
+
+        if (seoM.Robot == null) seoM.Robot = pageVal.robots;
+        if (seoM.SchemaType == null) seoM.SchemaType  = pageVal.schemaType;
 
         var sw = new StringBuilder(4096);
         sw.Append(_documentTag);

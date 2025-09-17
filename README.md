@@ -52,6 +52,10 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
     // Useful for static sites or APIs that only receive small payloads (like query parameters, not file uploads).
     serverOptions.Limits.MaxRequestBodySize = 32 * 1024; // 32 KB
 
+    // Limit the maximum size of the response buffer.
+    // Useful for controlling the memory usage and ensuring responses are not too large for quick delivery.
+    serverOptions.Limits.MaxResponseBufferSize = 1024 * 1024 * 3; // 3 MB
+
     // Reduce the TCP keep-alive timeout.
     // This limits how long idle connections stay open, freeing up resources.
     // A short timeout like 5 seconds is ideal for static websites, SPAs, or CDN-like behavior.
@@ -716,6 +720,11 @@ async Task<Alga.wwwcore.Models.Seo?> GetArticleSeoData(HttpContext? context, IHt
 ```
 
 ### 7. Publication ```dotnet publish -c Release```
+
+### 8. IIS 
+
+IIS Manager > Application Pools > Aadvanced Settings: Idle Time-out (minutes) = 0
+
 
 
 

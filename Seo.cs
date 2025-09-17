@@ -21,7 +21,7 @@ public sealed class Seo(Models.Seo model)
         var url = $"{config.Url}{model.Path}";
         //var urlC = model.UrlCanonical == null ? url : $"{config.Url}{model.UrlCanonical}";
 
-        if(model.UrlCanonical != null && model.UrlCanonical != model.Path)
+        if(model.UrlCanonical != null && model.UrlCanonical.Replace(config.Url, "") != model.Path)
             sb.Append($"<link rel=\"canonical\" href=\"{config.Url}{model.UrlCanonical}\" />");
 
         // title
