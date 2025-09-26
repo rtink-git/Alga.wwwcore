@@ -47,18 +47,31 @@ const MEDIA_SKIP_RE = /\.(?:png|jpe?g|gif|webp)$/i;
 
 self.addEventListener('install', (event) => {{
   event.waitUntil(
-    caches.open(CACHE_NAME)                       // ① открываем кэш
+    caches.open(CACHE_NAME) // Open the cache
       .then((cache) => {{
-        self.skipWaiting();                       // ② мгновенная активация
-        // ③ для каждого URL создаём цепочку cache.add(url).catch…
+        self.skipWaiting(); // Instant activation
+
+        // For each URL create a chain cache.add(url).catch…
+        // Safe caching with error handling for each URL
+
         const addOps = URLs_TO_CACHE.map((url) =>
-          cache.add(url)
+          cache.add(url).catch(error => {{
+            console.warn(`[ServiceWorker] Не удалось кэшировать ${{url}}:`, error);
+            // Return success to not break the entire Promise.all
+            return null;
+          }})
         );
-        // ④ ждём, пока завершатся все операции addOps (успех + ошибки)
-        return Promise.all(addOps);
+        
+        // Use Promise.allSettled instead of Promise.all
+        return Promise.allSettled(addOps).then(results => {{
+          const successful = results.filter(r => r.status === 'fulfilled').length;
+          const failed = results.filter(r => r.status === 'rejected').length;
+          
+          console.log(`[ServiceWorker] Caching completed: ${{successful}} successful, ${{failed}} failed`);
+        }});
       }})
       .then(() => {{
-        console.log('[ServiceWorker] Установка завершена с частичным кэшированием.');
+        console.log('[ServiceWorker] Installation completed with partial caching.');
       }})
   );
 }});
