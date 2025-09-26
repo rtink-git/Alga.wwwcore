@@ -36,11 +36,16 @@ Additionally, the library provides built-in tools for integrating with the Teleg
 
 ``` 
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
 var isDebug = builder.Environment.IsDevelopment();
 
+// -------------------------------
+
+int maxConnections = 500;
+int maxRpsPerIp = (int)(maxConnections * 0.6);
 
 // Kestrel Server Configuration
 // -------------------------------
@@ -48,13 +53,13 @@ var isDebug = builder.Environment.IsDevelopment();
 
 builder.WebHost.ConfigureKestrel(serverOptions =>
 {
-    // Limit the maximum size of the request body to 32 KB.
+    // Limit the maximum size of the request body to 8 KB.
     // Useful for static sites or APIs that only receive small payloads (like query parameters, not file uploads).
-    serverOptions.Limits.MaxRequestBodySize = 32 * 1024; // 32 KB
+    serverOptions.Limits.MaxRequestBodySize = 8 * 1024;
 
     // Limit the maximum size of the response buffer.
     // Useful for controlling the memory usage and ensuring responses are not too large for quick delivery.
-    serverOptions.Limits.MaxResponseBufferSize = 1024 * 1024 * 3; // 3 MB
+    serverOptions.Limits.MaxResponseBufferSize = 256 * 1024; // 256 MB
 
     // Reduce the TCP keep-alive timeout.
     // This limits how long idle connections stay open, freeing up resources.
@@ -71,7 +76,7 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
     // Set a cap on the number of concurrent TCP connections handled by Kestrel.
     // This value can be tuned based on the server's capabilities and expected traffic.
-    serverOptions.Limits.MaxConcurrentConnections = 10_000;
+    serverOptions.Limits.MaxConcurrentConnections = maxConnections;
 
     // Specify supported HTTP protocols for endpoints (applies to all by default).
     // HTTP/2 allows multiplexing multiple streams over a single connection — useful for static sites and APIs.
@@ -83,13 +88,11 @@ builder.WebHost.ConfigureKestrel(serverOptions =>
 
     // Optional: If you want full control over HTTPS, ports, and protocols, define explicit listeners.
     // Example below sets up HTTPS on port 443 with specified protocols.
-    /*
-    serverOptions.ListenAnyIP(443, listenOptions =>
-    {
-        listenOptions.UseHttps(); // TLS is required for HTTP/2 and HTTP/3
-        listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-    });
-    */
+    // serverOptions.ListenAnyIP(443, listenOptions =>
+    // {
+    //     listenOptions.UseHttps(); // TLS is required for HTTP/2 and HTTP/3
+    //     listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+    // });
 });
 
 
@@ -117,31 +120,29 @@ builder.Services.AddRateLimiter(options =>
                 return RateLimitPartition.GetNoLimiter("invalid-ip");
             }
 
-            return RateLimitPartition.GetTokenBucketLimiter(
-                partitionKey: ip,
-                factory: _ => new TokenBucketRateLimiterOptions
-                {
-                    // Maximum number of tokens available at once (burst capacity).
-                    // Allows short spikes of traffic.
-                    TokenLimit = isDebug ? 600 : 200,
+            return RateLimitPartition.GetTokenBucketLimiter( partitionKey: ip, factory: _ => new TokenBucketRateLimiterOptions
+            {
+                // Maximum number of tokens available at once (burst capacity).
+                // Allows short spikes of traffic.
+                TokenLimit = maxRpsPerIp,
 
-                    // Tokens added per replenishment cycle (sustained rate).
-                    TokensPerPeriod = 20, // Up to 20 requests per second
+                // Tokens added per replenishment cycle (sustained rate).
+                TokensPerPeriod = Math.Min(maxRpsPerIp, 100),
 
-                    // Interval at which tokens are refilled.
-                    ReplenishmentPeriod = TimeSpan.FromSeconds(1),
+                // Interval at which tokens are refilled.
+                ReplenishmentPeriod = TimeSpan.FromSeconds(1),
 
-                    // How many requests can be queued when tokens run out.
-                    QueueLimit = 20, // Allows some short waiting
+                // How many requests can be queued when tokens run out.
+                QueueLimit = 20, // Allows some short waiting
 
-                    // Requests are processed in FIFO order from the queue.
-                    QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                // Requests are processed in FIFO order from the queue.
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
 
-                    // Tokens are refilled automatically by a background timer.
-                    AutoReplenishment = true
-                });
+                // Tokens are refilled automatically by a background timer.
+                AutoReplenishment = true,
+            });
         }),
-        
+
         // Global sliding window limiter (to protect backend globally)
         PartitionedRateLimiter.Create<HttpContext, string>(_ =>
             RateLimitPartition.GetSlidingWindowLimiter(
@@ -149,11 +150,15 @@ builder.Services.AddRateLimiter(options =>
                 _ => new SlidingWindowRateLimiterOptions
                 {
                     // Total allowed requests per window
-                    PermitLimit = 5000,
+                    PermitLimit = maxConnections * 3,
+
                     // Time window duration
                     Window = TimeSpan.FromSeconds(1),
+
                     // Subdivision of window (e.g. 2 × 500ms)
-                    SegmentsPerWindow = 2
+                    SegmentsPerWindow = 2,
+
+                    QueueLimit = (int)(maxConnections * 0.02) // Без очереди на глобальном уровне
                 }))
     );
 
