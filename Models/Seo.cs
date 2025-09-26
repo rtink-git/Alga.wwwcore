@@ -13,4 +13,16 @@ public sealed class Seo
     public string? Lang { get; set; }
     public DateTime? DatePublished { get; set; }
     public string? SchemaType { get; set; } // https://schema.org type
+    public string? Telephone { get; set; } // https://schema.org
+    public string? Email { get; set; } // https://schema.org
+    public string? AddressType { get; set; } // https://schema.org
+    public int? PostalCode { get; set; } // https://schema.org
+    public string? AddressCountry { get; set; } // https://schema.org
+    public string? AddressRegion { get; set; } // https://schema.org
+    public string? AddressLocality { get; set; } // https://schema.org
+    public string? StreetAddress { get; set; } // https://schema.org
+    public string? GeoType { get; set; } // https://schema.org
+    public double? GeoLatitude { get; set; } // https://schema.org
+    public double? GeoLongitude { get; set; } // https://schema.org
+    public string[]? OpeningHours { get; set; } // https://schema.org
 }

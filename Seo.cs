@@ -87,6 +87,12 @@ public sealed class Seo(Models.Seo model)
             if (model.DatePublished is DateTime date)
                 jsonSb.Append(",\"datePublished\":\"").Append(date.ToString("yyyy-MM-dd")).Append('\"');
 
+            if(!string.IsNullOrEmpty(model.Telephone))
+                jsonSb.Append(",\"telephone\":\"").Append(model.Telephone).Append('\"');
+
+            if(!string.IsNullOrEmpty(model.Telephone))
+                jsonSb.Append(",\"email\":\"").Append(model.Email).Append('\"');
+
             if (imgFull is not null && model.ImageWidth > 0 && model.ImageHeight > 0)
             {
                 jsonSb.Append(",\"image\":{\"@type\":\"ImageObject\",\"url\":\"")
@@ -99,6 +105,49 @@ public sealed class Seo(Models.Seo model)
                     .Append(model.Title)
                     .Append(" Image\"}");
             }
+
+            if (model.AddressType != null)
+            {
+                jsonSb.Append($",\"address\":{{");
+                jsonSb.Append($"\"@type\":\"{model.AddressType}\"");
+                if(model.PostalCode != null)
+                    jsonSb.Append($",\"postalCode\":\"{model.PostalCode}\"");
+                if(model.AddressCountry != null)
+                    jsonSb.Append($",\"addressCountry\":\"{model.AddressCountry}\"");
+                if(model.AddressRegion != null)
+                    jsonSb.Append($",\"addressRegion\":\"{model.AddressRegion}\"");
+                if(model.AddressLocality != null)
+                    jsonSb.Append($",\"addressLocality\":\"{model.AddressLocality}\"");
+                if(model.StreetAddress != null)
+                    jsonSb.Append($",\"streetAddress\":\"{model.StreetAddress}\"");
+                jsonSb.Append($"}}");
+            }
+
+            if (model.GeoType != null && model.GeoLatitude != null && model.GeoLongitude != null)
+            {
+                jsonSb.Append($",\"geo\":{{");
+                jsonSb.Append($"\"@type\":\"{model.GeoType}\"");
+                if(model.GeoLatitude != null)
+                    jsonSb.Append($",\"latitude\":\"{model.GeoLatitude?.ToString().Replace(",", ".")}\"");
+                if(model.GeoLongitude != null)
+                    jsonSb.Append($",\"longitude\":\"{model.GeoLongitude?.ToString().Replace(",", ".")}\"");
+                jsonSb.Append($"}}");
+            }
+
+            if (model.OpeningHours != null && model.OpeningHours.Length > 0)
+            {
+                var lAsStr = "";
+                foreach (var i in model.OpeningHours)
+                    lAsStr += $"\"{i}\",";
+                lAsStr = lAsStr.Trim(',');
+
+                jsonSb.Append($",\"openingHours\":[{lAsStr}]");
+            }
+
+//     "streetAddress": "Казанский проспект, 234а",
+            //     "addressLocality": "Набережные Челны",
+            //     "addressCountry": "RU"
+
 
             jsonSb.Append("}</script>");
             sb.Append(jsonSb);

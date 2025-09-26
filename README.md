@@ -457,7 +457,7 @@ void AppMapGet(string route, string template) {
     app.MapGet(route, async (HttpContext context, Alga.wwwcore.Root www) =>
     {
         context.Response.ContentType = "text/html; charset=utf-8";
-        context.Response.Headers.CacheControl = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
+        context.Response.Headers.CacheControl = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}, stale-if-error={RtInk.Constants.ThreeHInSecForCache * 24}";
 
         var writer = context.Response.BodyWriter;
 
@@ -723,7 +723,13 @@ async Task<Alga.wwwcore.Models.Seo?> GetArticleSeoData(HttpContext? context, IHt
 
 ### 8. IIS 
 
-IIS Manager > Application Pools > Aadvanced Settings: Idle Time-out (minutes) = 0
+IIS Manager > Application Pools > Aadvanced Settings: 
+General: Start Mode = AlwaisRunning
+Process model: Idle Time-out (minutes) = 0
+Recycling: Regular Time Interval (minutes) = 0
+Recycling: Private memory limit (KB) = 0
+Recycling: Virtual memory limit (KB) = 0
+Rapid Fail Protection: Enabled: False
 
 
 
