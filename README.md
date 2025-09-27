@@ -36,7 +36,13 @@ Additionally, the library provides built-in tools for integrating with the Teleg
 
 ``` 
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.RateLimiting;
+using System.Buffers;
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -458,26 +464,38 @@ AppMapGet("/terms", "Terms");
 AppMapGet("/u/{login-search}", "u");
 AppMapGet("/users", "users");
 
-void AppMapGet(string route, string template) {
-    app.MapGet(route, async (HttpContext context, Alga.wwwcore.Root www) =>
+void AppMapGet(string route, string template) => app.MapGet(route, (HttpContext context, Alga.wwwcore.Root www) => WriteMapGet(template, context, www)).CacheOutput(ThreeHOutputCachePolicy);
+
+void WriteMapGet(string template, HttpContext context, Alga.wwwcore.Root www, Alga.wwwcore.Models.Seo? seoModel = null)
+{
+    var response = context.Response;
+
+    try
     {
-        context.Response.ContentType = "text/html; charset=utf-8";
-        context.Response.Headers.CacheControl = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}, stale-if-error={RtInk.Constants.ThreeHInSecForCache * 24}";
+        var headers = response.Headers;
+        headers.ContentType = "text/html; charset=utf-8";
+        headers.CacheControl = CacheControlValue;
+        response.StatusCode = StatusCodes.Status200OK;
 
-        var writer = context.Response.BodyWriter;
+        var writer = response.BodyWriter;
 
-        try
+        var fullPath = string.Create(UiPrefix.Length + template.Length, (UiPrefix, template), static (span, state) =>
         {
-            context.Response.StatusCode = 200;
-            www.WriteHtml(writer, $"/UISs/{template}");
-            await writer.FlushAsync();
-        }
-        catch (Exception ex)
-        {
-            context.Response.StatusCode = 500;
-            await context.Response.WriteAsync("Internal Server Error");
-        }
-    }).CacheOutput(HOutputCachePolicy);
+            state.UiPrefix.AsSpan().CopyTo(span);
+            state.template.AsSpan().CopyTo(span[state.UiPrefix.Length..]);
+        });
+
+        www.WriteHtml(writer, fullPath, context.Request.Path, seoModel);
+
+        _ = writer.FlushAsync();
+    }
+    catch
+    {
+        response.StatusCode = StatusCodes.Status500InternalServerError;
+        var writer = response.BodyWriter;
+        writer.Write(ErrorBytes);
+        _ = writer.FlushAsync();
+    }
 }
 
 
