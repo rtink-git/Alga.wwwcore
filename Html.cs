@@ -48,18 +48,18 @@ class Html
     const string _startTags = "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\">";
 
     // Streams a fully‑assembled HTML page to the provided <paramref name="writer"
-    public void WriteTo(IBufferWriter<byte> writer, Models.SchemeJsonM pageVal, FrozenDictionary<string, HashSet<string>>? pageModulesVal = null, Models.Seo? seoM = null)
+    public void WriteTo(IBufferWriter<byte> writer, Models.SchemeJsonM pageVal, FrozenDictionary<string, HashSet<string>>? pageModulesVal = null, Models.Seo? seoM = null, string? pageModelAsJSON = null)
     {
         if (seoM == null)
         {
             seoM = new Models.Seo();
-            seoM.Title = pageVal.title;
-            seoM.Robot = pageVal.robots;
-            seoM.Path = pageVal.path;
+            // seoM.Title = pageVal.title;
+            // seoM.Robot = pageVal.robots;
+            // seoM.Path = pageVal.path;
             //seoM.SchemaType = pageVal.schemaType;
         }
 
-        if (seoM.Robot == null) seoM.Robot = pageVal.robots;
+        // if (seoM.Robot == null) seoM.Robot = pageVal.robots;
         //if (seoM.SchemaType == null) seoM.SchemaType  = pageVal.schemaType;
 
         var sw = new StringBuilder(4096);
@@ -102,6 +102,9 @@ class Html
                         }
 
         if (!string.IsNullOrWhiteSpace(pageVal.style)) sw.Append(LinkHtml(pageVal.style));
+
+        if (!string.IsNullOrEmpty(pageModelAsJSON)) sw.Append($"<script id=\"page-model\" type=\"application/json\">{pageModelAsJSON}</script>");
+        
         if (!string.IsNullOrWhiteSpace(pageVal.script))
         {
             //slw.Append(PreloadLinkAsScript(pageVal.script));
@@ -116,7 +119,7 @@ class Html
         if (_googleAnalitysScript != null) sw.Append(_googleAnalitysScript);
         if(_yandexMetrikaScripts != null) sw.Append(_yandexMetrikaScripts);
 
-        sw.Append(_themeColorMeta);            
+        sw.Append(_themeColorMeta);
         sw.Append(_finishTags);
 
         foreach (ReadOnlyMemory<char> chunk in sw.GetChunks())

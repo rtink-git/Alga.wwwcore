@@ -59,25 +59,25 @@ public class Root
         return sitemap.Build(Collections.VisitedUrlsMap); // если Build умеет писать в Stream
     }
 
-    public void WriteHtml(IBufferWriter<byte> writer, string UISName, string path, Models.Seo? seoM = null)
+    public void WriteHtml(IBufferWriter<byte> writer, string UISName, string path, Models.Seo? seoM = null, string? pageModelAsJSON = null)
     {
         if (Pages == null || !Pages.TryGetValue(UISName, out var pageVal)) return;
 
         RegisterUrlVisit(path, pageVal, seoM);
 
-        if (seoM == null)
+        if (seoM == null && pageModelAsJSON == null)
         {
             writer.Write(pageVal.html);
             return;
         }
 
-        _htmlGen.WriteTo(writer, pageVal, PageModules, seoM);
+        _htmlGen.WriteTo(writer, pageVal, PageModules, seoM, pageModelAsJSON);
     }
 
     void RegisterUrlVisit(string path, Models.SchemeJsonM pageVal, Models.Seo? seoM = null)
     {
-        var robots = seoM?.Robot ?? pageVal.robots;
-        if (robots == null || robots.Contains("noindex")) return;
+        // var robots = seoM?.Robot ?? pageVal.robots;
+        // if (robots == null || robots.Contains("noindex")) return;
 
         var url = seoM?.UrlCanonical != null ? seoM.UrlCanonical : ConfigM.Url + path;
 
