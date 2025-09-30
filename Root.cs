@@ -81,7 +81,8 @@ public class Root
 
         var url = seoM?.UrlCanonical != null ? seoM.UrlCanonical : ConfigM.Url + path;
 
+        // Имеются вопросики
 
-        Collections.VisitedUrlsMap.TryAdd(url, new() { Lastmod = seoM?.DatePublished != null ? seoM.DatePublished : null });
+        Collections.VisitedUrlsMap.TryAdd(url, new() { Lastmod = seoM?.SchemaOrg?.DatePublished != null ? seoM.SchemaOrg?.DatePublished : null });
     }
 }

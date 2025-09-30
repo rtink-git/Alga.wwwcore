@@ -38,6 +38,9 @@ public class Config
     // Google Analytics tracking ID. Example: "G-XXXXXXX".
     public string? GoogleAnalyticsCode { get; init; }
 
+    // Webmaster yandex: https://webmaster.yandex.kz/
+    public string? YandexVerificationCode { get; init; }
+
     // Yandex Metrika tracking ID. Example: "12345678".
     public string? YandexMetrikaCode { get; init; }
 

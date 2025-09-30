@@ -24,133 +24,56 @@ public sealed class Seo(Models.Seo model)
         if(model.UrlCanonical != null && model.UrlCanonical.Replace(config.Url, "") != model.Path)
             sb.Append($"<link rel=\"canonical\" href=\"{config.Url}{model.UrlCanonical}\" />");
 
-        // title
-        if (!string.IsNullOrEmpty(model.Title))
-            sb.Append("<title>").Append(model.Title).Append("</title>");
-
-        // description
-        AppendMeta(sb, "description", model.Description);
-
-        // Build full image URL once
-        string? imgFull = model.ImageUrl is { Length: >0 } img && img[0] == '/'
-            ? string.Concat(config.Url, img)
-            : model.ImageUrl;
-
-        // — Open Graph —
-        AppendOG(sb, "article", "og:type");
-        AppendOG(sb, url, "og:url");
-        AppendOG(sb, model.Title, "og:title");
-        AppendOG(sb, model.Description, "og:description");
-        AppendOG(sb, config.Name, "og:site_name");
-        AppendOG(sb, config.Lang ?? model.Lang, "og:locale");
-        
-        if (imgFull is not null)
+        if (model.SchemaOrg != null)
         {
-            AppendOG(sb, imgFull, "og:image");
-            AppendOG(sb, $"{model.Title} Image", "og:image:alt");
-            if (model.ImageWidth is >0 and int w && model.ImageHeight is >0 and int h)
+
+            // title
+            if (!string.IsNullOrEmpty(model.Title))
+                sb.Append("<title>").Append(model.Title).Append("</title>");
+
+            // description
+            if(!string.IsNullOrEmpty(model.SchemaOrg.Description)) AppendMeta(sb, "description", model.SchemaOrg.Description);
+
+            // Build full image URL once
+            string? imgFull = model.ImageUrl is { Length: > 0 } img && img[0] == '/'
+                ? string.Concat(config.Url, img)
+                : model.ImageUrl;
+
+            // — Open Graph —
+            AppendOG(sb, "article", "og:type");
+            AppendOG(sb, url, "og:url");
+            AppendOG(sb, model.Title, "og:title");
+            if(!string.IsNullOrEmpty(model.SchemaOrg.Description)) AppendOG(sb, model.SchemaOrg.Description, "og:description");
+            AppendOG(sb, config.Name, "og:site_name");
+            AppendOG(sb, config.Lang ?? model.Lang, "og:locale");
+
+            if (imgFull is not null)
             {
-                AppendOG(sb, w.ToString(), "og:image:width");
-                AppendOG(sb, h.ToString(), "og:image:height");
-            }
-        }
-
-        // — Twitter —
-        AppendMeta(sb, "twitter:card", "summary_large_image");
-        AppendMeta(sb, "twitter:title", model.Title);
-        AppendMeta(sb, "twitter:url", url);
-        AppendMeta(sb, "twitter:description", model.Description);
-        AppendMeta(sb, "twitter:site", config.TwitterSite);
-        
-        if (imgFull is not null)
-        {
-            AppendMeta(sb, "twitter:image", imgFull);
-            AppendMeta(sb, "twitter:image:alt", $"{model.Title} Image");
-        }
-
-        if (model.SchemaType != null)
-        {
-            // — JSON-LD —
-            // string typeJsonLD = url.AsSpan().TrimEnd('/').SequenceEqual(config.Url.AsSpan())
-            //     ? "WebSite"
-            //     : "WebPage";
-
-            var jsonSb = new StringBuilder(JsonLdCapacity);
-            jsonSb.Append("<script type=\"application/ld+json\">{\"@context\":\"https://schema.org\",");
-            jsonSb.Append("\"@type\":\"").Append(model.SchemaType).Append("\",");
-            jsonSb.Append("\"url\":\"").Append(url).Append("\",");
-            jsonSb.Append("\"name\":\"").Append(model.Title).Append('\"');
-
-            if (!string.IsNullOrEmpty(model.Description))
-                jsonSb.Append(",\"description\":\"").Append(model.Description).Append('\"');
-
-            if (model.DatePublished is DateTime date)
-                jsonSb.Append(",\"datePublished\":\"").Append(date.ToString("yyyy-MM-dd")).Append('\"');
-
-            if(!string.IsNullOrEmpty(model.Telephone))
-                jsonSb.Append(",\"telephone\":\"").Append(model.Telephone).Append('\"');
-
-            if(!string.IsNullOrEmpty(model.Telephone))
-                jsonSb.Append(",\"email\":\"").Append(model.Email).Append('\"');
-
-            if (imgFull is not null && model.ImageWidth > 0 && model.ImageHeight > 0)
-            {
-                jsonSb.Append(",\"image\":{\"@type\":\"ImageObject\",\"url\":\"")
-                    .Append(imgFull)
-                    .Append("\",\"width\":\"")
-                    .Append(model.ImageWidth.Value)
-                    .Append("\",\"height\":\"")
-                    .Append(model.ImageHeight.Value)
-                    .Append("\",\"caption\":\"")
-                    .Append(model.Title)
-                    .Append(" Image\"}");
+                AppendOG(sb, imgFull, "og:image");
+                AppendOG(sb, $"{model.Title} Image", "og:image:alt");
+                if (model.ImageWidth is > 0 and int w && model.ImageHeight is > 0 and int h)
+                {
+                    AppendOG(sb, w.ToString(), "og:image:width");
+                    AppendOG(sb, h.ToString(), "og:image:height");
+                }
             }
 
-            if (model.AddressType != null)
+            // — Twitter —
+            AppendMeta(sb, "twitter:card", "summary_large_image");
+            AppendMeta(sb, "twitter:title", model.Title);
+            AppendMeta(sb, "twitter:url", url);
+            if(!string.IsNullOrEmpty(model.SchemaOrg.Description)) AppendMeta(sb, "twitter:description", model.SchemaOrg.Description);
+            AppendMeta(sb, "twitter:site", config.TwitterSite);
+
+            if (imgFull is not null)
             {
-                jsonSb.Append($",\"address\":{{");
-                jsonSb.Append($"\"@type\":\"{model.AddressType}\"");
-                if(model.PostalCode != null)
-                    jsonSb.Append($",\"postalCode\":\"{model.PostalCode}\"");
-                if(model.AddressCountry != null)
-                    jsonSb.Append($",\"addressCountry\":\"{model.AddressCountry}\"");
-                if(model.AddressRegion != null)
-                    jsonSb.Append($",\"addressRegion\":\"{model.AddressRegion}\"");
-                if(model.AddressLocality != null)
-                    jsonSb.Append($",\"addressLocality\":\"{model.AddressLocality}\"");
-                if(model.StreetAddress != null)
-                    jsonSb.Append($",\"streetAddress\":\"{model.StreetAddress}\"");
-                jsonSb.Append($"}}");
+                AppendMeta(sb, "twitter:image", imgFull);
+                AppendMeta(sb, "twitter:image:alt", $"{model.Title} Image");
             }
 
-            if (model.GeoType != null && model.GeoLatitude != null && model.GeoLongitude != null)
-            {
-                jsonSb.Append($",\"geo\":{{");
-                jsonSb.Append($"\"@type\":\"{model.GeoType}\"");
-                if(model.GeoLatitude != null)
-                    jsonSb.Append($",\"latitude\":\"{model.GeoLatitude?.ToString().Replace(",", ".")}\"");
-                if(model.GeoLongitude != null)
-                    jsonSb.Append($",\"longitude\":\"{model.GeoLongitude?.ToString().Replace(",", ".")}\"");
-                jsonSb.Append($"}}");
-            }
-
-            if (model.OpeningHours != null && model.OpeningHours.Length > 0)
-            {
-                var lAsStr = "";
-                foreach (var i in model.OpeningHours)
-                    lAsStr += $"\"{i}\",";
-                lAsStr = lAsStr.Trim(',');
-
-                jsonSb.Append($",\"openingHours\":[{lAsStr}]");
-            }
-
-//     "streetAddress": "Казанский проспект, 234а",
-            //     "addressLocality": "Набережные Челны",
-            //     "addressCountry": "RU"
-
-
-            jsonSb.Append("}</script>");
-            sb.Append(jsonSb);
+            sb.Append("<script type=\"application/ld+json\">");
+            sb.Append(new SchemaOrg(model.SchemaOrg).GetJsonLD(url, model.Title, model.SchemaOrg.Description));
+            sb.Append("</script>");
         }
 
         return sb.ToString();

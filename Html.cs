@@ -17,6 +17,7 @@ class Html
     readonly string _preconnectFontsGstatic;
     readonly string _googleAnalitysScript;
     readonly string _yandexMetrikaScripts;
+    readonly string _yandexVerificationCode;
     readonly string _msgPackScript;
     readonly string _telegramScript;
 
@@ -27,6 +28,9 @@ class Html
         _iconLink32 = IconLinkHtml(32, "icon");
         _iconLinkApple = IconLinkHtml(180, "apple-touch-icon");
         _themeColorMeta = $$"""<meta name="theme-color" content="{{_config.ThemeColor}}">""";
+        if (!string.IsNullOrEmpty(_config.YandexVerificationCode))
+            _yandexVerificationCode = $$"""<meta name="yandex-verification" content="{{_config.YandexVerificationCode}}">""";
+
         _preconnectFontsCom = PreconnectLink("https://fonts.googleapis.com");
         _preconnectFontsGstatic = PreconnectLink("https://fonts.gstatic.com", true);
         if (!string.IsNullOrEmpty(_config.GoogleAnalyticsCode))
@@ -39,8 +43,6 @@ class Html
             _telegramScript = "<script src=\"https://telegram.org/js/telegram-web-app.js\" crossorigin=\"anonymous\" defer></script>";
     }
 
-    //_msgPackScript = "<script src=\"https://unpkg.com/msgpack-lite@0.1.26/dist/msgpack.min.js\" defer></script>";
-
     const string _documentTag = "<!DOCTYPE html>";
     const string _finishTags = "<link rel=\"manifest\" href=\"/manifest.json\"><script src=\"/app.js\" defer></script></head><body></body></html>";
     const string _startTags = "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1, maximum-scale=1\">";
@@ -52,14 +54,13 @@ class Html
         {
             seoM = new Models.Seo();
             seoM.Title = pageVal.title;
-            seoM.Description = pageVal.description;
             seoM.Robot = pageVal.robots;
             seoM.Path = pageVal.path;
-            seoM.SchemaType = pageVal.schemaType;
+            //seoM.SchemaType = pageVal.schemaType;
         }
 
         if (seoM.Robot == null) seoM.Robot = pageVal.robots;
-        if (seoM.SchemaType == null) seoM.SchemaType  = pageVal.schemaType;
+        //if (seoM.SchemaType == null) seoM.SchemaType  = pageVal.schemaType;
 
         var sw = new StringBuilder(4096);
         sw.Append(_documentTag);
@@ -67,6 +68,8 @@ class Html
         sw.Append(_startTags);
 
         sw.Append(new Seo(seoM).MergeTags(_config)); // seoM?.MergeTags(_config));
+
+        sw.Append(_yandexVerificationCode);
 
         if (_config.PreconnectUrls?.Count > 0)
             foreach (var url in _config.PreconnectUrls)
