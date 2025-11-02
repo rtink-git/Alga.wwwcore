@@ -59,6 +59,7 @@ window.IS_LOCAL_HOST = ['localhost', '127.0.0.1', '[::1]'].includes(window.locat
 // Кэш для хранения уже найденных ответов из Cache API
 const cacheResponses = new Map();
 
+/*
 document.addEventListener('click', async function(event) {{
   const link = event.target.closest('a');
   if (!link || !link.href || link.target === '_blank' || link.hasAttribute('download') || link.origin !== location.origin) return;
@@ -206,6 +207,7 @@ async function replaceHead(newHead) {{
 
   document.head.appendChild(fragment);
 }}
+*/
 
 const registerServiceWorker = async () => {{
   if (!('serviceWorker' in navigator)) return;
