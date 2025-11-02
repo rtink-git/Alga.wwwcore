@@ -38,11 +38,15 @@ public class Config
     // Google Analytics tracking ID. Example: "G-XXXXXXX".
     public string? GoogleAnalyticsCode { get; init; }
 
+    public string? GoogleSiteVerification { get; init; } // https://search.google.com/
+
     // Webmaster yandex: https://webmaster.yandex.kz/
     public string? YandexVerificationCode { get; init; }
 
     // Yandex Metrika tracking ID. Example: "12345678".
     public string? YandexMetrikaCode { get; init; }
+
+    public string? BingSiteVerification { get; init; } // https://www.bing.com/webmasters
 
     // Twitter handle for metadata. Example: "@example".
     public string? TwitterSite { get; init; }

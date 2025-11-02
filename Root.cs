@@ -83,6 +83,6 @@ public class Root
 
         // Имеются вопросики
 
-        Collections.VisitedUrlsMap.TryAdd(url, new() { Lastmod = seoM?.SchemaOrg?.DatePublished != null ? seoM.SchemaOrg?.DatePublished : null });
+        //Collections.VisitedUrlsMap.TryAdd(url, new() { Lastmod = seoM?.SchemaOrgs?[0].DatePublished != null ? seoM.SchemaOrgs?[0].DatePublished : null });
     }
 }

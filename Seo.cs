@@ -1,95 +1,105 @@
 using System.Text;
 using System.Runtime.CompilerServices;
+using NUglify.JavaScript.Syntax;
 
 namespace Alga.wwwcore;
 
 // Immutable holder for SEO metadata that emits HTML tags & JSON-LD
-public sealed class Seo(Models.Seo model)
+public sealed class Seo
 {
-    private const int JsonLdCapacity = 512;
-    
-    // Generates structured markup for meta tags, Open Graph, Twitter Cards, and JSON-LD schema
-    internal string MergeTags(Models.Config config)
-    {
-        var sb = new StringBuilder(2048);
+    StringBuilder _sb;
+    Models.Config _config;
+    Models.Seo _model;
 
+    public Seo(StringBuilder sb, Models.Config config, Models.Seo model)
+    {
+        _sb = sb;
+        _config = config;
+        _model = model;
+    }
+
+    // Generates structured markup for meta tags, Open Graph, Twitter Cards, and JSON-LD schema
+    internal void MergeTags()
+    {
         // robots
-        AppendMeta(sb, "robots", model.Robot ?? "noindex, nofollow");
+
+        AppendMeta("robots", _model.Robot ?? "noindex, nofollow");
 
         // canonical
 
-        var url = $"{config.Url}{model.Path}";
-        //var urlC = model.UrlCanonical == null ? url : $"{config.Url}{model.UrlCanonical}";
+        var url = $"{_config.Url}{_model.Path}";
 
-        if(model.UrlCanonical != null && model.UrlCanonical.Replace(config.Url, "") != model.Path)
-            sb.Append($"<link rel=\"canonical\" href=\"{config.Url}{model.UrlCanonical}\" />");
+        if (_model.UrlCanonical != null && _model.UrlCanonical.Replace(_config.Url, "") != _model.Path)
+            _sb.Append($"<link rel=\"canonical\" href=\"{_config.Url}{_model.UrlCanonical}\" />");
 
-        if (model.SchemaOrg != null)
+        if (!string.IsNullOrEmpty(_model.Title))
         {
+            _sb.Append($"<title>{_model.Title}</title>");
+            AppendMeta("description", _model.Description);
 
-            // title
-            if (!string.IsNullOrEmpty(model.Title))
-                sb.Append("<title>").Append(model.Title).Append("</title>");
+            // The Open Graph protocol. https://ogp.me
 
-            // description
-            if(!string.IsNullOrEmpty(model.SchemaOrg.Description)) AppendMeta(sb, "description", model.SchemaOrg.Description);
+            AppendOG("og:type", _model.TypeOg);
+            AppendOG("og:url", url);
+            AppendOG("og:title", _model.Title);
+            AppendOG("og:description", _model.Description);
+            AppendOG("og:site_name", _config.NameShort);
+            AppendOG("og:locale", _config.Lang);
 
-            // Build full image URL once
-            string? imgFull = model.ImageUrl is { Length: > 0 } img && img[0] == '/'
-                ? string.Concat(config.Url, img)
-                : model.ImageUrl;
+            AppendOG("product:price:amount", _model.ItemPrice?.ToString().Replace(",", "."));
+            AppendOG("product:price:currency", _model.ItemCurrency);
+            AppendOG("product:availability", _model.ItemAvailability);
 
-            // — Open Graph —
-            AppendOG(sb, "article", "og:type");
-            AppendOG(sb, url, "og:url");
-            AppendOG(sb, model.Title, "og:title");
-            if(!string.IsNullOrEmpty(model.SchemaOrg.Description)) AppendOG(sb, model.SchemaOrg.Description, "og:description");
-            AppendOG(sb, config.Name, "og:site_name");
-            AppendOG(sb, config.Lang ?? model.Lang, "og:locale");
 
-            if (imgFull is not null)
+            AppendOG("og:image", _model.ImageUrl);
+            AppendOG("og:image:type", _model.ImageEncodingFormat);
+            AppendOG("og:image:alt", _model.Title);
+            if (_model.ImageWidth > 0 && _model.ImageHeight > 0)
             {
-                AppendOG(sb, imgFull, "og:image");
-                AppendOG(sb, $"{model.Title} Image", "og:image:alt");
-                if (model.ImageWidth is > 0 and int w && model.ImageHeight is > 0 and int h)
-                {
-                    AppendOG(sb, w.ToString(), "og:image:width");
-                    AppendOG(sb, h.ToString(), "og:image:height");
-                }
+                AppendOG("og:image:width", _model.ImageWidth.ToString());
+                AppendOG("og:image:height", _model.ImageHeight.ToString());
             }
 
-            // — Twitter —
-            AppendMeta(sb, "twitter:card", "summary_large_image");
-            AppendMeta(sb, "twitter:title", model.Title);
-            AppendMeta(sb, "twitter:url", url);
-            if(!string.IsNullOrEmpty(model.SchemaOrg.Description)) AppendMeta(sb, "twitter:description", model.SchemaOrg.Description);
-            AppendMeta(sb, "twitter:site", config.TwitterSite);
+            // Twitter
 
-            if (imgFull is not null)
-            {
-                AppendMeta(sb, "twitter:image", imgFull);
-                AppendMeta(sb, "twitter:image:alt", $"{model.Title} Image");
-            }
+            AppendMeta("twitter:card", "summary_large_image");
+            AppendMeta("twitter:url", url);
+            AppendMeta("twitter:title", _model.Title);
+            AppendMeta("twitter:description", _model.Description);
+            AppendMeta("twitter:site", _config.TwitterSite);
+            AppendMeta("twitter:image", _model.ImageUrl);
+            AppendMeta("twitter:image:alt", _model.Title);
 
-            sb.Append("<script type=\"application/ld+json\">");
-            sb.Append(new SchemaOrg(model.SchemaOrg).GetJsonLD(url, model.Title, model.SchemaOrg.Description));
-            sb.Append("</script>");
+            // --- JSON-LD ---
+
+            if (_model.SchemaOrgsJson?.Length > 32) _sb.Append($"<script type=\"application/ld+json\">{_model.SchemaOrgsJson}</script>");
+
         }
-
-        return sb.ToString();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AppendMeta(StringBuilder sb, string name, string? content)
+    private void AppendMeta(string name, string? content)
     {
         if (!string.IsNullOrEmpty(content))
-            sb.Append("<meta name=\"").Append(name).Append("\" content=\"").Append(content).Append("\">");
+        {
+            _sb.Append("<meta name=\"");
+            _sb.Append(name);
+            _sb.Append("\" content=\"");
+            _sb.Append(content);
+            _sb.Append("\">");
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static void AppendOG(StringBuilder sb, string? content, string property)
+    private void AppendOG(string property, string? content)
     {
         if (!string.IsNullOrEmpty(content))
-            sb.Append("<meta property=\"").Append(property).Append("\" content=\"").Append(content).Append("\">");
+        {
+            _sb.Append("<meta property=\"");
+            _sb.Append(property);
+            _sb.Append("\" content=\"");
+            _sb.Append(content);
+            _sb.Append("\">");
+        }
     }
 }
