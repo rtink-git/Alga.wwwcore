@@ -810,6 +810,7 @@ What has been changed in new build (4.2.0) compared to the previous version (4.1
 
 - In the new version, SEO optimization has been improved.
 A tool for flexible schema.org markup generation and integration into endpoints has been added.
+- SPA mode disableds
 
 
 
