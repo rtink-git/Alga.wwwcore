@@ -447,63 +447,180 @@ app.Use(async (context, next) =>
 
 // -- endpoints: EXAMPLE
 
-AppMapGet("/", "i");
-AppMapGet("/a/{search}", "i");
-AppMapGet("/about", "about");
-AppMapGet("/access", "access");
-AppMapGet("/app", "app");
-AppMapGet("/bookmarks", "bookmarks");
-AppMapGet("/offline", "offline"); 
-AppMapGet("/error", "Error");
-AppMapGet("/error/{code}", "Error");
-AppMapGet("/i/{search}", "i");
-AppMapGet("/locs", "Locs");
-AppMapGet("/privacy", "Privacy");
-AppMapGet("/settings", "Settings");
-AppMapGet("/terms", "Terms");
-AppMapGet("/u/{login-search}", "u");
-AppMapGet("/users", "users");
-
-void AppMapGet(string route, string template) => app.MapGet(route, (HttpContext context, Alga.wwwcore.Root www) => WriteMapGet(template, context, www)).CacheOutput(ThreeHOutputCachePolicy);
-
-void WriteMapGet(string template, HttpContext context, Alga.wwwcore.Root www, Alga.wwwcore.Models.Seo? seoModel = null)
+app.MapGet("/", async (HttpContext context, IHttpClientFactory httpClientFactory, Alga.wwwcore.Root www) =>
 {
-    var response = context.Response;
-
     try
     {
-        var headers = response.Headers;
-        headers.ContentType = "text/html; charset=utf-8";
-        headers.CacheControl = CacheControlValue;
-        response.StatusCode = StatusCodes.Status200OK;
-
-        var writer = response.BodyWriter;
-
-        var fullPath = string.Create(UiPrefix.Length + template.Length, (UiPrefix, template), static (span, state) =>
-        {
-            state.UiPrefix.AsSpan().CopyTo(span);
-            state.template.AsSpan().CopyTo(span[state.UiPrefix.Length..]);
-        });
-
-        www.WriteHtml(writer, fullPath, context.Request.Path, seoModel);
-
-        _ = writer.FlushAsync();
+        var endp = new ForhouseW.Core.Endpoints._(httpClientFactory, seoHClient);
+        string? modelJson = await endp.ModelJson();
+        if (modelJson == null) { context.Response.StatusCode = 404; await context.Response.WriteAsync("Model not found or unable to fetch data."); return; }
+        WriteMapGet("i", context, www, endp.Seo(), modelJson);
     }
-    catch
+    catch (HttpRequestException httpEx) { context.Response.StatusCode = 503; await context.Response.WriteAsync($"Service unavailable: {httpEx.Message}"); }
+    catch (Exception ex) { context.Response.StatusCode = 500; await context.Response.WriteAsync($"Internal server error: {ex.Message}"); }
+}).CacheOutput(HOutputCachePolicy);
+
+
+
+namespace ForhouseW.Core.Endpoints;
+
+public class _
+{
+    private HttpClient _client;
+    private Models.Category? _model;
+
+    public _(IHttpClientFactory httpClientFactory, string clientName) => _client = httpClientFactory.CreateClient(clientName);
+
+    public async Task<string?> ModelJson()
     {
-        response.StatusCode = StatusCodes.Status500InternalServerError;
-        var writer = response.BodyWriter;
-        writer.Write(ErrorBytes);
-        _ = writer.FlushAsync();
+        var mj = await _client.GetStringAsync($"{ForhouseW.Constants.UrlApi}/WebApp/CategoryInf_inner_json_c?id=0&search=");
+        if (mj != null) _model = JsonSerializer.Deserialize<Models.Category>(mj);
+        return mj;
+    }
+
+    public Alga.wwwcore.Models.Seo? Seo()
+    {
+        Alga.wwwcore.Helpers.SchemaOrgJsonBuilder? schema = null;
+        if (_model != null)
+        {
+            schema = new Alga.wwwcore.Helpers.SchemaOrgJsonBuilder().WithContext();
+            schema.AddArray("@graph",
+                new Seo.OrganizationSOrg().GetSchema(),
+                new Seo.WebSiteSOrg().GetSchema(),
+                new Seo.StoreSOrg().Get(),
+                new Alga.wwwcore.Helpers.SchemaOrgJsonBuilder().WithType("Service").WithName("Консультация по подбору строительных материалов").WithDescription("Профессиональная помощь в выборе оптимальных строительных и отделочных материалов для вашего проекта. Мы учитываем бюджет, сроки, экологичность, эксплуатационные характеристики и дизайнерскую концепцию, чтобы вы получили идеальное соотношение цены и качества.").AddNested("provider", i => i.WithId($"{Constants.Url}#organization")).BuildJsonObject(),
+                new Seo.CategoryPageSOrg().Get(0, Constants.Name, _model, Constants.Description)
+            );
+        }
+
+        return new()
+        {
+            Title = $"{Constants.Name} - Магазин строительных материалов в Набережных Челнах",
+            Description = Constants.Description,
+            Robot = "index, follow",
+            UrlCanonical = Constants.Url[Constants.Url.Length - 1] == '/' ? null : $"/", 
+            Path = "/",
+            Lang = Constants.Lang,
+            TypeOg = "website",
+            ImageUrl = Constants.imgPrimary,
+            ImageWidth = Constants.imgWidthPrimary,
+            ImageHeight = Constants.imgHeightPrimary,
+            ImageEncodingFormat = Constants.imgEncodingFormatPrimary,
+            SchemaOrgsJson = schema?.ToJson(false)
+        };
     }
 }
 
-
+// Endpoints (ussing Alga.wwwcore)
+// --------------------------------
+// -- ...
+// --------------------------------
 
 await app.RunAsync();
 ``` 
 
-### 4. Add configuration for correct library operation. (appsettings.json)
+
+### 4. Alga.wwwcore Root Initialization and Usage Example in ASP.NET Core
+
+**Important:** To let the library determine which page interface to apply, you need to explicitly specify the path to the page directory. For example: /Pages/Home.
+
+You can pass seo parameters using Alga.wwwcore.Models.Seo? seoModel. If the path does not have changeable parameters, we recommend adding seo parameters inside scheme.json and not using Alga.wwwcore.Models.Seo - which speeds up the delivery of the already formed page to the client
+
+
+```
+// Alga.wwwcore Root Initialization
+// --------------------------------
+// Registers the Alga.wwwcore.Root as a singleton service.
+// Initializes it with configuration from "AlgaWwwcoreConfig", logger instance, and environment mode.
+// Enables structured frontend generation and development-time support based on project config.
+
+builder.Services.AddSingleton<Alga.wwwcore.Root>(sp =>
+{
+    var cfg = sp.GetRequiredService<IConfiguration>().GetSection("AlgaWwwcoreConfig").Get<Alga.wwwcore.Models.Config>();
+    var logger  = sp.GetRequiredService<ILogger<Alga.wwwcore.Root>>();
+    var isDebug = sp.GetRequiredService<IHostEnvironment>().IsDevelopment();
+    return new Alga.wwwcore.Root(cfg, isDebug, logger);
+});
+
+
+// Endpoints Example
+
+string CacheControlValue = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
+string UiPrefix = "/UISs/";
+byte[] ErrorBytes = "Internal Server Error"u8.ToArray();
+
+app.MapGet("/", async (HttpContext context, IHttpClientFactory httpClientFactory, Alga.wwwcore.Root www) =>
+{
+    try
+    {
+        var endp = new ForhouseW.Core.Endpoints._(httpClientFactory, seoHClient);
+        string? modelJson = await endp.ModelJson();
+        if (modelJson == null) { context.Response.StatusCode = 404; await context.Response.WriteAsync("Model not found or unable to fetch data."); return; }
+        WriteMapGet("i", context, www, endp.Seo(), modelJson);
+    }
+    catch (HttpRequestException httpEx) { context.Response.StatusCode = 503; await context.Response.WriteAsync($"Service unavailable: {httpEx.Message}"); }
+    catch (Exception ex) { context.Response.StatusCode = 500; await context.Response.WriteAsync($"Internal server error: {ex.Message}"); }
+}).CacheOutput(HOutputCachePolicy);
+
+
+namespace ForhouseW.Core.Endpoints;
+
+public class _
+{
+    private HttpClient _client;
+    private Models.Category? _model;
+
+    public _(IHttpClientFactory httpClientFactory, string clientName) => _client = httpClientFactory.CreateClient(clientName);
+
+    public async Task<string?> ModelJson()
+    {
+        var mj = await _client.GetStringAsync($"{ForhouseW.Constants.UrlApi}/WebApp/CategoryInf_inner_json_c?id=0&search=");
+        if (mj != null) _model = JsonSerializer.Deserialize<Models.Category>(mj);
+        return mj;
+    }
+
+    public Alga.wwwcore.Models.Seo? Seo()
+    {
+        Alga.wwwcore.Helpers.SchemaOrgJsonBuilder? schema = null;
+        if (_model != null)
+        {
+            schema = new Alga.wwwcore.Helpers.SchemaOrgJsonBuilder().WithContext();
+            schema.AddArray("@graph",
+                new Seo.OrganizationSOrg().GetSchema(),
+                new Seo.WebSiteSOrg().GetSchema(),
+                new Seo.StoreSOrg().Get(),
+                new Alga.wwwcore.Helpers.SchemaOrgJsonBuilder().WithType("Service").WithName("Консультация по подбору строительных материалов").WithDescription("Профессиональная помощь в выборе оптимальных строительных и отделочных материалов для вашего проекта. Мы учитываем бюджет, сроки, экологичность, эксплуатационные характеристики и дизайнерскую концепцию, чтобы вы получили идеальное соотношение цены и качества.").AddNested("provider", i => i.WithId($"{Constants.Url}#organization")).BuildJsonObject(),
+                new Seo.CategoryPageSOrg().Get(0, Constants.Name, _model, Constants.Description)
+            );
+        }
+
+        return new()
+        {
+            Title = $"{Constants.Name} - Магазин строительных материалов в Набережных Челнах",
+            Description = Constants.Description,
+            Robot = "index, follow",
+            UrlCanonical = Constants.Url[Constants.Url.Length - 1] == '/' ? null : $"/", 
+            Path = "/",
+            Lang = Constants.Lang,
+            TypeOg = "website",
+            ImageUrl = Constants.imgPrimary,
+            ImageWidth = Constants.imgWidthPrimary,
+            ImageHeight = Constants.imgHeightPrimary,
+            ImageEncodingFormat = Constants.imgEncodingFormatPrimary,
+            SchemaOrgsJson = schema?.ToJson(false)
+        };
+    }
+}
+```
+
+### 5. Alga.wwwcore wist https://schema.org
+
+The library provides a way to build schema.org markup for your endpoints using the Alga.wwwcore.Helpers.SchemaOrgJsonBuilder tool.
+You can create your markup in any part of your project and pass it to Alga.wwwcore.Models.Seo? Seo(), and then use it in
+WriteMapGet("i", context, www, endp.Seo());.
+
+
+### 6. Add configuration for correct library operation. (appsettings.json)
 
 ```
 {
@@ -528,7 +645,7 @@ await app.RunAsync();
 }
 ```
 
-### 5. Expected Data Structure
+### 7. Expected Data Structure
 
 You are free to use any architecture and design approaches when building your web application — the Alga.wwwcore library does not impose any restrictions on implementation. However, it only processes project structures and data formats that conform to its expected layout.
 
@@ -614,137 +731,9 @@ export async function CurrentDirectoryName() {
 
 Module code can be written in any form, but it’s strongly recommended to wrap it in a class or namespace to prevent naming collisions and side effects after scripts are bundled together.
 
-### 6. Alga.wwwcore Root Initialization and Usage Example in ASP.NET Core
+### 8. Publication ```dotnet publish -c Release```
 
-**Important:** To let the library determine which page interface to apply, you need to explicitly specify the path to the page directory. For example: /Pages/Home.
-
-You can pass seo parameters using Alga.wwwcore.Models.Seo? seoModel. If the path does not have changeable parameters, we recommend adding seo parameters inside scheme.json and not using Alga.wwwcore.Models.Seo - which speeds up the delivery of the already formed page to the client
-
-
-```
-// Alga.wwwcore Root Initialization
-// --------------------------------
-// Registers the Alga.wwwcore.Root as a singleton service.
-// Initializes it with configuration from "AlgaWwwcoreConfig", logger instance, and environment mode.
-// Enables structured frontend generation and development-time support based on project config.
-
-builder.Services.AddSingleton<Alga.wwwcore.Root>(sp =>
-{
-    var cfg = sp.GetRequiredService<IConfiguration>().GetSection("AlgaWwwcoreConfig").Get<Alga.wwwcore.Models.Config>();
-    var logger  = sp.GetRequiredService<ILogger<Alga.wwwcore.Root>>();
-    var isDebug = sp.GetRequiredService<IHostEnvironment>().IsDevelopment();
-    return new Alga.wwwcore.Root(cfg, isDebug, logger);
-});
-
-string CacheControlValue = $"public, max-age={RtInk.Constants.ThreeHInSecForCache}, stale-while-revalidate={RtInk.Constants.ThreeHInSecForCache * 24}";
-string UiPrefix = "/UISs/";
-byte[] ErrorBytes = "Internal Server Error"u8.ToArray();
-
-AppMapGet("/", "i");
-app.MapGet("/a/{search}", async (HttpContext context, Alga.wwwcore.Root www, IHttpClientFactory? httpClientFactory, IMemoryCache cache) => WriteMapGet("i", context, www, await GetArticleSeoData(context, httpClientFactory, cache))).CacheOutput(HOutputCachePolicy);
-AppMapGet("/about", "about");
-AppMapGet("/access", "access");
-AppMapGet("/app", "app");
-AppMapGet("/bookmarks", "bookmarks");
-AppMapGet("/error", "Error");
-AppMapGet("/error/{code}", "Error");
-app.MapGet("/i/{search}", async (HttpContext context, Alga.wwwcore.Root www, IHttpClientFactory? httpClientFactory, IMemoryCache cache) => WriteMapGet("i", context, www, await GetArticleSeoData(context, httpClientFactory, cache))).CacheOutput(HOutputCachePolicy);
-AppMapGet("/locs", "Locs");
-AppMapGet("/offline", "offline");
-AppMapGet("/privacy", "Privacy");
-AppMapGet("/settings", "Settings");
-AppMapGet("/terms", "Terms");
-app.MapGet("/u/{login-search}", async (HttpContext context, Alga.wwwcore.Root www, IHttpClientFactory? httpClientFactory, IMemoryCache cache) => WriteMapGet("u", context, www, await GetUserSeoData(context, httpClientFactory, cache))).CacheOutput(HOutputCachePolicy);
-AppMapGet("/users", "users");
-
-void AppMapGet(string route, string template) => app.MapGet(route, (HttpContext context, Alga.wwwcore.Root www) => WriteMapGet(template, context, www)).CacheOutput(HOutputCachePolicy);
-
-void WriteMapGet(string template, HttpContext context, Alga.wwwcore.Root www, Alga.wwwcore.Models.Seo? seoModel = null)
-{
-    var response = context.Response;
-
-    try
-    {
-        var headers = response.Headers;
-        headers.ContentType = "text/html; charset=utf-8";
-        headers.CacheControl = CacheControlValue;
-        response.StatusCode = StatusCodes.Status200OK;
-
-        var writer = response.BodyWriter;
-
-        var fullPath = string.Create(UiPrefix.Length + template.Length, (UiPrefix, template), static (span, state) =>
-        {
-            state.UiPrefix.AsSpan().CopyTo(span);
-            state.template.AsSpan().CopyTo(span[state.UiPrefix.Length..]);
-        });
-
-        www.WriteHtml(writer, fullPath, context.Request.Path, seoModel);
-
-        _ = writer.FlushAsync();
-    }
-    catch
-    {
-        response.StatusCode = StatusCodes.Status500InternalServerError;
-        var writer = response.BodyWriter;
-        writer.Write(ErrorBytes);
-        _ = writer.FlushAsync();
-    }
-}
-
-// Starting from version 4.1.0, it is now possible to automatically generate and deliver sitemap.xml directly via a link.
-// How it works: all paths requested by clients are stored in memory. When the route for retrieving the XML sitemap is requested, the system accesses the stored data to obtain the list of URLs, generates the sitemap on the fly, and immediately sends it to the client.
-
-
-app.MapGet("/sitemap.xml", async (HttpContext context, Alga.wwwcore.Root www) =>
-{
-    var bytes = www.SitemapWriteXML();
-    context.Response.ContentType = "application/xml; charset=utf-8";
-    context.Response.ContentLength = bytes.Length;
-    await context.Response.Body.WriteAsync(bytes);
-});
-
-await app.RunAsync();
-
-async Task<Alga.wwwcore.Models.Seo?> GetArticleSeoData(HttpContext? context, IHttpClientFactory? httpClientFactory, IMemoryCache cache)
-{
-    if (context == null || httpClientFactory == null) return null;
-
-    string[] pathSplit = context.Request.Path.Value?.Split('/') ?? [];
-    if (pathSplit.Length < 3) return null;
-
-    string fullUrl = $"{context.Request.Scheme}://{context.Request.Host}{context.Request.Path}{context.Request.QueryString}";
-    string url = $"{RtInk.Constants.UrlApi}/WebApp/Article/SEO_c?search={pathSplit[2]}";
-    string cacheKey = GetCacheKey(url);
-
-    if (cache?.TryGetValue(cacheKey, out Alga.wwwcore.Models.Seo? cachedSeo) == true) return cachedSeo;
-
-    var httpClient = httpClientFactory.CreateClient("SeoClient");
-
-    try
-    {
-        var m = await httpClient.GetFromJsonAsync<ArticleSEOModel>(url);
-        var seoM = new Alga.wwwcore.Models.Seo
-        {
-            Title = $"{m.title} | RT.ink",
-            Description = m.description?.Replace("\"", "'"),
-            UrlCanonical = $"https://rt.ink/i/{pathSplit[2]}",
-            ImageUrl = m.extension is not null ? $"https://api.rt.ink/f/{m.id}.{m.extension}" : null,
-            ImageWidth = m.width ?? 0,
-            ImageHeight = m.height ?? 0,
-            Lang = m.lang ?? "en",
-            DatePublished = m.datePublished
-        };
-
-        cache?.Set(cacheKey, seoM, TimeSpan.FromMinutes(5));
-        return seoM;
-    }
-    catch { return null; }
-}
-```
-
-### 7. Publication ```dotnet publish -c Release```
-
-### 8. IIS 
+### 9. IIS 
 
 IIS Manager > Application Pools > Aadvanced Settings: 
 General: Start Mode = AlwaisRunning
@@ -817,9 +806,10 @@ var requestData = new
 
 ## Upates
 
-What has been changed in new build (4.1.0) compared to the previous version (4.0.4)
+What has been changed in new build (4.2.0) compared to the previous version (4.1.0)
 
-- it is now possible to automatically generate and deliver sitemap.xml directly via a link. How it works: all paths requested by clients are stored in memory. When the route for retrieving the XML sitemap is requested, the system accesses the stored data to obtain the list of URLs, generates the sitemap on the fly, and immediately sends it to the client.
+- In the new version, SEO optimization has been improved.
+A tool for flexible schema.org markup generation and integration into endpoints has been added.
 
 
 
