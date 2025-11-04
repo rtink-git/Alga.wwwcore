@@ -52,18 +52,9 @@ public class Root
         PageModules = schemes.PagesModules;
     }
 
-    public byte[] SitemapWriteXML()
-    {
-        var sitemap = new Sitemap();
-        using var ms = new MemoryStream();
-        return sitemap.Build(Collections.VisitedUrlsMap); // если Build умеет писать в Stream
-    }
-
     public void WriteHtml(IBufferWriter<byte> writer, string UISName, string path, Models.Seo? seoM = null, string? pageModelAsJSON = null)
     {
         if (Pages == null || !Pages.TryGetValue(UISName, out var pageVal)) return;
-
-        RegisterUrlVisit(path, pageVal, seoM);
 
         if (seoM == null && pageModelAsJSON == null)
         {
@@ -72,17 +63,5 @@ public class Root
         }
 
         _htmlGen.WriteTo(writer, pageVal, PageModules, seoM, pageModelAsJSON);
-    }
-
-    void RegisterUrlVisit(string path, Models.SchemeJsonM pageVal, Models.Seo? seoM = null)
-    {
-        // var robots = seoM?.Robot ?? pageVal.robots;
-        // if (robots == null || robots.Contains("noindex")) return;
-
-        var url = seoM?.UrlCanonical != null ? seoM.UrlCanonical : ConfigM.Url + path;
-
-        // Имеются вопросики
-
-        //Collections.VisitedUrlsMap.TryAdd(url, new() { Lastmod = seoM?.SchemaOrgs?[0].DatePublished != null ? seoM.SchemaOrgs?[0].DatePublished : null });
     }
 }
