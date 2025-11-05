@@ -1,3 +1,4 @@
+using System.Text;
 using System.Xml;
 using System.Xml.Linq;
 
@@ -15,7 +16,62 @@ public static class Builder
     private static readonly XNamespace NewsNs = "http://www.google.com/schemas/sitemap-news/0.9";
     private static readonly XNamespace XhtmlNs = "http://www.w3.org/1999/xhtml";
 
-    public static string Generate(IEnumerable<Models.Url> urls)
+    public static string GenerateString(IEnumerable<Models.Url> urls)
+    {
+        var bytes = GenerateBytes(urls);
+        return Encoding.UTF8.GetString(bytes);
+    }
+
+    public static string GenerateSitemapIndexString(IEnumerable<Models.IndexItem> items)
+    {
+        var bytes = GenerateSitemapIndexBytes(items);
+        return Encoding.UTF8.GetString(bytes);
+    }
+
+    public static byte[] GenerateBytes(IEnumerable<Models.Url> urls)
+    {
+        var urlset = BuildUrlSetElement(urls.Where(x => !string.IsNullOrWhiteSpace(x.Loc)));
+        var doc = new XDocument(urlset);
+        return SerializeToUtf8Bytes(doc);
+    }
+
+    public static byte[] GenerateSitemapIndexBytes(IEnumerable<Models.IndexItem> items)
+    {
+        var index = new XElement(Ns + "sitemapindex",
+            items.Select(i =>
+            {
+                var el = new XElement(Ns + "sitemap",
+                    new XElement(Ns + "loc", i.Loc)
+                );
+                if (i.LastMod.HasValue)
+                    el.Add(new XElement(Ns + "lastmod", i.LastMod.Value.ToString("yyyy-MM-dd")));
+                return el;
+            })
+        );
+
+        var doc = new XDocument(index);
+        return SerializeToUtf8Bytes(doc);
+    }
+
+    private static byte[] SerializeToUtf8Bytes(XDocument doc)
+    {
+        using var memoryStream = new MemoryStream();
+        
+        var settings = new XmlWriterSettings
+        {
+            Encoding = Encoding.UTF8,
+            Indent = true,
+            OmitXmlDeclaration = false // XmlWriter сам добавит правильную декларацию
+        };
+
+        using var writer = XmlWriter.Create(memoryStream, settings);
+        doc.WriteTo(writer);
+        writer.Flush();
+
+        return memoryStream.ToArray();
+    }
+
+    private static XElement BuildUrlSetElement(IEnumerable<Models.Url> urls)
     {
         var urlset = new XElement(Ns + "urlset",
             new XAttribute(XNamespace.Xmlns + "image", ImageNs),
@@ -25,7 +81,7 @@ public static class Builder
             new XAttribute(XNamespace.Xmlns + "xhtml", XhtmlNs)
         );
 
-        foreach (var u in urls.Where(x => !string.IsNullOrWhiteSpace(x.Loc)))
+        foreach (var u in urls)
         {
             var url = new XElement(Ns + "url",
                 new XElement(Ns + "loc", u.Loc)
@@ -146,48 +202,21 @@ public static class Builder
             urlset.Add(url);
         }
 
-        var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), urlset);
-
-        using var sw = new StringWriter();
-        using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, Encoding = System.Text.Encoding.UTF8 });
-        doc.WriteTo(xw);
-        xw.Flush();
-
-        return sw.ToString();
-    }
-
-    public static string GenerateSitemapIndex(IEnumerable<Models.IndexItem> items)
-    {
-        var index = new XElement(Ns + "sitemapindex",
-            items.Select(i =>
-            {
-                var el = new XElement(Ns + "sitemap",
-                    new XElement(Ns + "loc", i.Loc)
-                );
-                if (i.LastMod.HasValue)
-                    el.Add(new XElement(Ns + "lastmod", i.LastMod.Value.ToString("yyyy-MM-dd")));
-                return el;
-            })
-        );
-
-        var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), index);
-
-        using var sw = new StringWriter();
-        using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, Encoding = System.Text.Encoding.UTF8 });
-        doc.WriteTo(xw);
-        xw.Flush();
-
-        return sw.ToString();
+        return urlset;
     }
 }
 
 
+// using System.Text;
 // using System.Xml;
 // using System.Xml.Linq;
 
-// namespace Alga.wwwcore.Sitemap;
+// namespace Alga.wwwcore.Helpers.SitemapXML;
 
-// public static class SitemapGenerator
+// /// <summary>
+// /// What are Sitemaps? https://sitemaps.org/protocol.html
+// /// </summary>
+// public static class Builder
 // {
 //     private static readonly XNamespace Ns = "http://www.sitemaps.org/schemas/sitemap/0.9";
 //     private static readonly XNamespace ImageNs = "http://www.google.com/schemas/sitemap-image/1.1";
@@ -196,7 +225,7 @@ public static class Builder
 //     private static readonly XNamespace NewsNs = "http://www.google.com/schemas/sitemap-news/0.9";
 //     private static readonly XNamespace XhtmlNs = "http://www.w3.org/1999/xhtml";
 
-//     public static string GenerateSitemap(IEnumerable<SitemapUrl> urls)
+//     public static string Generate(IEnumerable<Models.Url> urls)
 //     {
 //         var urlset = new XElement(Ns + "urlset",
 //             new XAttribute(XNamespace.Xmlns + "image", ImageNs),
@@ -293,13 +322,12 @@ public static class Builder
 //                     productEl.Add(new XElement(ProductNs + "brand", p.Brand));
 //                 if (!string.IsNullOrWhiteSpace(p.Category))
 //                     productEl.Add(new XElement(ProductNs + "category", p.Category));
-//                 if (p.Price.HasValue)
-//                 {
-//                     var price = new XElement(ProductNs + "price", p.Price.Value.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
-//                     if (!string.IsNullOrWhiteSpace(p.Currency))
-//                         price.SetAttributeValue("currency", p.Currency);
-//                     productEl.Add(price);
-//                 }
+
+//                 var price = new XElement(ProductNs + "price", p.Price.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
+//                 if (!string.IsNullOrWhiteSpace(p.Currency))
+//                     price.SetAttributeValue("currency", p.Currency);
+//                 productEl.Add(price);
+
 //                 if (!string.IsNullOrWhiteSpace(p.Availability))
 //                     productEl.Add(new XElement(ProductNs + "availability", p.Availability));
 //                 if (!string.IsNullOrWhiteSpace(p.Condition))
@@ -328,17 +356,33 @@ public static class Builder
 //             urlset.Add(url);
 //         }
 
-//         var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), urlset);
+//         // var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), urlset);
+
+//         // using var sw = new StringWriter();
+//         // using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, Encoding = System.Text.Encoding.UTF8 });
+//         // doc.WriteTo(xw);
+//         // xw.Flush();
+
+//         var doc = new XDocument(urlset); // Без декларации
 
 //         using var sw = new StringWriter();
-//         using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, Encoding = System.Text.Encoding.UTF8 });
+//         // Принудительно пишем декларацию UTF-8
+//         sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+
+//         using var xw = XmlWriter.Create(sw, new XmlWriterSettings 
+//         { 
+//             Indent = true,
+//             OmitXmlDeclaration = true // Исключаем декларацию из XmlWriter
+//         });
+
 //         doc.WriteTo(xw);
 //         xw.Flush();
 
-//         return sw.ToString();
+//         string xmlString = sw.ToString();
+//         return xmlString;
 //     }
 
-//     public static string GenerateSitemapIndex(IEnumerable<SitemapIndexItem> items)
+//     public static string GenerateSitemapIndex(IEnumerable<Models.IndexItem> items)
 //     {
 //         var index = new XElement(Ns + "sitemapindex",
 //             items.Select(i =>
@@ -352,13 +396,31 @@ public static class Builder
 //             })
 //         );
 
-//         var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), index);
+//         // var doc = new XDocument(new XDeclaration("1.0", "UTF-8", "yes"), index);
+
+//         // using var sw = new StringWriter();
+//         // using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, Encoding = System.Text.Encoding.UTF8 });
+//         // doc.WriteTo(xw);
+//         // xw.Flush();
+
+//         // return sw.ToString();
+
+//         var doc = new XDocument(index); // Без декларации
 
 //         using var sw = new StringWriter();
-//         using var xw = XmlWriter.Create(sw, new XmlWriterSettings { Indent = true, Encoding = System.Text.Encoding.UTF8 });
+//         // Принудительно пишем декларацию UTF-8
+//         sw.WriteLine("<?xml version=\"1.0\" encoding=\"UTF-8\"?>");
+
+//         using var xw = XmlWriter.Create(sw, new XmlWriterSettings 
+//         { 
+//             Indent = true,
+//             OmitXmlDeclaration = true // Исключаем декларацию из XmlWriter
+//         });
+
 //         doc.WriteTo(xw);
 //         xw.Flush();
 
-//         return sw.ToString();
+//         string xmlString = sw.ToString();
+//         return xmlString;
 //     }
 // }
