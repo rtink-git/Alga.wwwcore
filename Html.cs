@@ -137,7 +137,7 @@ class Html
         FrozenDictionary<string, HashSet<string>>? pageModulesVal = null,
         Models.Seo? seo = null)
     {
-        var writer = new ArrayBufferWriter<byte>(2048); // Pre-allocate reasonable size
+        var writer = new ArrayBufferWriter<byte>(); // Pre-allocate reasonable size
         WriteTo(writer, pageVal, pageModulesVal, seo);
         return writer.WrittenMemory;
     }

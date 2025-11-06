@@ -151,39 +151,6 @@ public static class Builder
                 url.Add(videoEl);
             }
 
-            // Продукты
-            if (u.Product is not null)
-            {
-                var p = u.Product;
-                var productEl = new XElement(ProductNs + "product");
-                if (!string.IsNullOrWhiteSpace(p.Id))
-                    productEl.Add(new XElement(ProductNs + "id", p.Id));
-                if (!string.IsNullOrWhiteSpace(p.Name))
-                    productEl.Add(new XElement(ProductNs + "name", p.Name));
-                if (!string.IsNullOrWhiteSpace(p.Description))
-                    productEl.Add(new XElement(ProductNs + "description", p.Description));
-                if (!string.IsNullOrWhiteSpace(p.Image))
-                    productEl.Add(new XElement(ProductNs + "image", p.Image));
-                if (!string.IsNullOrWhiteSpace(p.Brand))
-                    productEl.Add(new XElement(ProductNs + "brand", p.Brand));
-                if (!string.IsNullOrWhiteSpace(p.Category))
-                    productEl.Add(new XElement(ProductNs + "category", p.Category));
-
-                var price = new XElement(ProductNs + "price", p.Price.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture));
-                if (!string.IsNullOrWhiteSpace(p.Currency))
-                    price.SetAttributeValue("currency", p.Currency);
-                productEl.Add(price);
-
-                if (!string.IsNullOrWhiteSpace(p.Availability))
-                    productEl.Add(new XElement(ProductNs + "availability", p.Availability));
-                if (!string.IsNullOrWhiteSpace(p.Condition))
-                    productEl.Add(new XElement(ProductNs + "condition", p.Condition));
-                if (!string.IsNullOrWhiteSpace(p.Gtin))
-                    productEl.Add(new XElement(ProductNs + "gtin", p.Gtin));
-
-                url.Add(productEl);
-            }
-
             // Новости
             if (u.News is not null)
             {

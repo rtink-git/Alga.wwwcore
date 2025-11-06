@@ -23,6 +23,6 @@ public sealed class Url
     public Dictionary<string, string>? AlternateUrls { get; init; }
     public List<Image>? Images { get; init; }
     public Video? Video { get; init; }
-    public Product? Product { get; init; }
+    // public Product? Product { get; init; }
     public News? News { get; init; }
 }
