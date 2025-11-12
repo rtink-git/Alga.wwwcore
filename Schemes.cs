@@ -170,7 +170,6 @@ class Schemes
             var jssp = $"script{_minType}{_jsType}";
             var jsMinPath = $"{path}{jssp}";
             File.WriteAllText(jsMinPath, jsMinify.Code);
-            CompressFile(jsMinPath);
             i.Value.script = $"{i.Key}/{jssp}";
 
             // Bundle page styles in one style -> Minify + Compress
@@ -182,7 +181,6 @@ class Schemes
                 var csssp = $"style{_minType}{_cssType}";
                 var cssMinPath = $"{path}{csssp}";
                 File.WriteAllText(cssMinPath, cssMinify.Code);
-                CompressFile(cssMinPath);
                 i.Value.style = $"{i.Key}/{csssp}";
             }
         }
@@ -215,12 +213,6 @@ class Schemes
         }
 
         return sb.ToString();
-    }
-
-    static void CompressFile(string path)
-    {
-        Helpers.FileCompressor.CompressFile(path, Helpers.FileCompressor.CompressionType.Brotli);
-        Helpers.FileCompressor.CompressFile(path, Helpers.FileCompressor.CompressionType.Gzip);
     }
 
     static string ReplacePrefix(string path, string prefix = "/") => path.Replace("\\", "/");
