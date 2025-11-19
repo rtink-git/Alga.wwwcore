@@ -124,6 +124,8 @@ public class SchemaOrgJsonBuilder : JsonBuilder
 
     public SchemaOrgJsonBuilder WithAvailability(string? val) { AddString("availability", val); return this; }
 
+    public SchemaOrgJsonBuilder WithBestRating(decimal? val) { AddDecimal("bestRating", val); return this; }
+
     public SchemaOrgJsonBuilder WithCaption(string? val) { AddString("caption", val); return this; }
 
     public SchemaOrgJsonBuilder WithCopyrightHolder(string? val) { AddString("copyrightHolder", val); return this; }
@@ -162,6 +164,14 @@ public class SchemaOrgJsonBuilder : JsonBuilder
 
     public SchemaOrgJsonBuilder WithPriceRange(string? val) { AddString("priceRange", val); return this; }
 
+    public SchemaOrgJsonBuilder WithReviewBody(string? val) { AddString("reviewBody", val); return this; }
+
+    public SchemaOrgJsonBuilder WithReviewCount(int? val) { AddInt("reviewCount", val); return this; }
+
+    public SchemaOrgJsonBuilder WithReviewRating(decimal? val) { AddDecimal("reviewRating", val); return this; }
+
+    public SchemaOrgJsonBuilder WithRatingValue(decimal? val) { AddDecimal("ratingValue", val); return this; }
+
     public SchemaOrgJsonBuilder WithRepresentativeOfPage(bool? val) { AddBool("representativeOfPage", val); return this; }
 
     public SchemaOrgJsonBuilder WithReturnFees(string? val) { AddString("returnFees", val); return this; }
@@ -178,7 +188,22 @@ public class SchemaOrgJsonBuilder : JsonBuilder
 
     public SchemaOrgJsonBuilder WithWidth(int? val) { AddInt("width", val); return this; }
 
+    public SchemaOrgJsonBuilder WithWorstRating(decimal? val) { AddDecimal("worstRating", val); return this; }
+
     // -----
+
+    public SchemaOrgJsonBuilder WithAggregateRating(
+        Rating rating,
+        int reviewCount)
+    {
+        WithType("AggregateRating");
+        WithReviewCount(reviewCount);
+        //AddNested("reviewRating", i => i.WithRating(rating));
+        WithRatingValue(rating.ratingValue);
+        WithBestRating(rating.bestRating);
+        WithWorstRating(rating.worstRating);
+        return this;
+    }
 
     public SchemaOrgJsonBuilder WithImageObject(
         string url,
@@ -195,6 +220,39 @@ public class SchemaOrgJsonBuilder : JsonBuilder
         WithCaption(caption);
         WithEncodingFormat(encodingFormat);
         WithRepresentativeOfPage(representativeOfPage);
+        return this;
+    }
+
+    public SchemaOrgJsonBuilder WithPerson (
+        string? name)
+    {
+        WithType("Person");
+        WithName(name);
+        return this;
+    }
+
+    public SchemaOrgJsonBuilder WithRating(Rating rating)
+    {
+        WithType("Rating");
+        WithRatingValue(rating.ratingValue);
+        WithBestRating(rating.bestRating);
+        WithWorstRating(rating.worstRating);
+        return this;
+    }
+
+    public SchemaOrgJsonBuilder WithReview (
+        Rating rating,
+        string? reviewBody,
+        DateTime? datePublished,
+        string? authorName)
+    {
+        WithType("Review");
+        AddNested("reviewRating", i => i.WithRating(rating));
+        WithReviewBody(reviewBody);
+        if(datePublished != null)
+            Add("datePublished", datePublished.Value.ToString("yyyy-MM-dd"));
+        if(authorName != null)
+            AddNested("author", i => i.WithPerson(authorName));
         return this;
     }
 
@@ -335,4 +393,13 @@ public class SchemaOrgJsonBuilder : JsonBuilder
 
         return this;
     }
+
+
+    public class Rating
+    {
+        public required decimal ratingValue { get; init; }
+        public required decimal bestRating { get; init; }
+        public required decimal worstRating { get; init; }
+    }
+
 }
