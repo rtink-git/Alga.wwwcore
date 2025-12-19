@@ -1,16 +1,11 @@
 using System.Text;
 using System.Xml;
 using System.Globalization;
+using System.Reflection.Metadata;
 
+namespace Alga.wwwcore.Helpers.YandexMarketLanguage;
 
-namespace Alga.wwwcore.Helpers;
-
-/// <summary>
-/// Yandex Market YML Feed
-/// A fluent builder class for generating a compliant Yandex Market YML product feed. Supports shop info, categories, currencies, and product offers.
-/// https://yandex.ru/support/market/ru/
-/// </summary>
-public class YandexMarketYmlBuilder
+public class Builder
 {
     private readonly string _shopName;
     private readonly string _shopCompany;
@@ -23,7 +18,7 @@ public class YandexMarketYmlBuilder
         Async = true
     };
 
-    public YandexMarketYmlBuilder(string shopName, string shopCompany, string shopUrl)
+    public Builder(string shopName, string shopCompany, string shopUrl)
     {
         _shopName = shopName ?? throw new ArgumentNullException(nameof(shopName));
         _shopCompany = shopCompany ?? throw new ArgumentNullException(nameof(shopCompany));
@@ -31,9 +26,9 @@ public class YandexMarketYmlBuilder
     }
 
     public async Task<byte[]> GenerateXmlAsync(
-        IEnumerable<OfferModel> offers,
-        IEnumerable<CategoryModel>? categories = null,
-        IEnumerable<CurrencyModel>? currencies = null)
+        IEnumerable<Models.OfferModel> offers,
+        IEnumerable<Models.CategoryModel>? categories = null,
+        IEnumerable<Models.CurrencyModel>? currencies = null)
     {
         using var stream = new MemoryStream();
         await using var w = XmlWriter.Create(stream, XmlSettings);
@@ -57,12 +52,12 @@ public class YandexMarketYmlBuilder
                 await w.WriteStartElementAsync(null, "currency", null);
                 await w.WriteAttributeStringAsync(null, "id", null, c.Id);
                 await w.WriteAttributeStringAsync(null, "rate", null, c.Rate.ToString("0.##", CultureInfo.InvariantCulture));
+
                 await w.WriteEndElementAsync();
             }
         }
         else
         {
-            // По умолчанию RUB
             await w.WriteStartElementAsync(null, "currency", null);
             await w.WriteAttributeStringAsync(null, "id", null, "RUB");
             await w.WriteAttributeStringAsync(null, "rate", null, "1");
@@ -71,7 +66,7 @@ public class YandexMarketYmlBuilder
         await w.WriteEndElementAsync(); // </currencies>
 
         // Categories (если есть категории)
-        if (categories != null && categories.Any())  // Проверка на null и пустой список
+        if (categories != null && categories.Any())
         {
             await w.WriteStartElementAsync(null, "categories", null);
             foreach (var c in categories)
@@ -110,6 +105,46 @@ public class YandexMarketYmlBuilder
                 foreach (var pic in o.AdditionalPictures)
                     await w.WriteElementStringAsync(null, "picture", null, pic);
 
+            // Добавляем новые поля
+            if (!string.IsNullOrEmpty(o.Vendor))
+                await w.WriteElementStringAsync(null, "vendor", null, o.Vendor);
+
+            if (!string.IsNullOrEmpty(o.VendorCode))
+                await w.WriteElementStringAsync(null, "vendorCode", null, o.VendorCode);
+
+            if (!string.IsNullOrEmpty(o.Barcode))
+                await w.WriteElementStringAsync(null, "barcode", null, o.Barcode);
+
+            if (o.WarrantyMonths.HasValue)
+                await w.WriteElementStringAsync(null, "warranty", null, $"{o.WarrantyMonths} месяцев");
+
+            if (o.Weight.HasValue)
+                await w.WriteElementStringAsync(null, "weight", null, o.Weight.Value.ToString("0.##", CultureInfo.InvariantCulture));
+
+            if (o.Dimensions.HasValue)
+                await w.WriteElementStringAsync(null, "dimensions", null, $"{o.Dimensions.Value.Length}x{o.Dimensions.Value.Width}x{o.Dimensions.Value.Height}");
+
+            if (o.Delivery.HasValue)
+                await w.WriteElementStringAsync(null, "delivery", null, o.Delivery.Value ? "true" : "false");
+
+            if (o.Pickup.HasValue)
+                await w.WriteElementStringAsync(null, "pickup", null, o.Pickup.Value ? "true" : "false");
+
+            if (o.Store.HasValue)
+                await w.WriteElementStringAsync(null, "store", null, o.Store.Value ? "true" : "false");
+
+            // Custom params (если есть)
+            if (o.Params != null && o.Params.Any())
+            {
+                foreach (var param in o.Params)
+                {
+                    await w.WriteStartElementAsync(null, "param", null);
+                    await w.WriteAttributeStringAsync(null, "name", null, param.Key);
+                    await w.WriteStringAsync(param.Value);
+                    await w.WriteEndElementAsync();
+                }
+            }
+
             await w.WriteEndElementAsync(); // </offer>
         }
         await w.WriteEndElementAsync(); // </offers>
@@ -120,32 +155,5 @@ public class YandexMarketYmlBuilder
         await w.FlushAsync();
 
         return stream.ToArray();
-    }
-
-    public sealed class CategoryModel
-    {
-        public required long Id { get; init; }
-        public long? ParentId { get; init; }
-        public required string Name { get; init; }
-    }
-
-    public sealed class OfferModel
-    {
-        public required long Id { get; init; }
-        public required string Url { get; init; }
-        public required decimal Price { get; init; }
-        public string CurrencyId { get; init; } = "RUB";
-        public required long CategoryId { get; init; }
-        public required string Name { get; init; }
-        public string? Description { get; init; }
-        public string? Picture { get; init; }
-        public List<string>? AdditionalPictures { get; init; }
-        public bool Available { get; init; } = true;
-    }
-
-    public sealed class CurrencyModel
-    {
-        public required string Id { get; init; } // RUB, USD, EUR...
-        public required decimal Rate { get; init; } // 1, 60, 0.85...
     }
 }
