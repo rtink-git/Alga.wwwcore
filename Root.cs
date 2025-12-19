@@ -14,7 +14,7 @@ public class Root
     /// The configuration manager used to retrieve App configuration.
     /// </summary>
     readonly Models.Config ConfigM;
-    //readonly IHttpContextAccessor HttpContextAccessor;
+
     readonly ILogger? _Logger;
     readonly FrozenDictionary<string, Models.SchemeJsonM> Pages;
     readonly FrozenDictionary<string, HashSet<string>> PageModules;
@@ -30,7 +30,7 @@ public class Root
         ConfigM = config ?? throw new ArgumentNullException(nameof(config));
         ConfigM.Url = config.Url.Trim('/');
         ConfigM.IsDebug = isDebug;
-        ConfigM.CurrentVersion = DateTime.UtcNow.ToString("yyyyMMddHHmm");
+        //sConfigM.CurrentVersion = ConfigM.IsDebug ? DateTime.UtcNow.ToString("yyyyMMddHHmm") : "0";
         _Logger = logger;
         _htmlGen = new Html(config);
 

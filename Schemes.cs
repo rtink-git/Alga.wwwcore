@@ -134,7 +134,7 @@ class Schemes
 
         PagesModules = pageModules.ToFrozenDictionary();
 
-        if (_config.IsDebug) return;
+        //if (_config.IsDebug) return;
 
         // 4. Bundle scripts and page components into one file (also for styles). Minify. Create compressed copies in gzip and brotly
 
@@ -160,6 +160,17 @@ class Schemes
 
             var path = ReplacePrefix($"{_wwwrootPathFull}{i.Key}", _prefix) + _prefix;
 
+            // проверяем все .min файлы и удаляем их
+            
+            foreach(var file in Directory.GetFiles(path))
+            {
+                var name = new FileInfo(file).Name;
+                if(name.Contains(".min.js") || name.Contains(".min.css"))
+                    File.Delete(file);
+            }
+
+            // --
+
             scriptsToBundle.Add($"{path}script.js");
             if (i.Value.style != null) stylesToBundle.Add($"{path}style.css");
 
@@ -170,7 +181,7 @@ class Schemes
             var jssp = $"script{_minType}{_jsType}";
             var jsMinPath = $"{path}{jssp}";
             File.WriteAllText(jsMinPath, jsMinify.Code);
-            i.Value.script = $"{i.Key}/{jssp}";
+            i.Value.script = _config.IsDebug ? $"{i.Key}/script.js" : $"{i.Key}/{jssp}";
 
             // Bundle page styles in one style -> Minify + Compress
 
@@ -181,7 +192,7 @@ class Schemes
                 var csssp = $"style{_minType}{_cssType}";
                 var cssMinPath = $"{path}{csssp}";
                 File.WriteAllText(cssMinPath, cssMinify.Code);
-                i.Value.style = $"{i.Key}/{csssp}";
+                i.Value.style = _config.IsDebug ? $"{i.Key}/style.css" : $"{i.Key}/{csssp}";
             }
         }
     }

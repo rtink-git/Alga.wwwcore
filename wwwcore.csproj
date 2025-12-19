@@ -26,8 +26,8 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.Net.Http.Headers" Version="10.0.0" />
     <PackageReference Include="NUglify" Version="1.21.17" />
-    <PackageReference Include="System.Text.Encodings.Web" Version="10.0.0" />
-    <PackageReference Include="System.Text.Json" Version="10.0.0" />
+    <!-- <PackageReference Include="System.Text.Encodings.Web" Version="10.0.0" />
+    <PackageReference Include="System.Text.Json" Version="10.0.0" /> -->
   </ItemGroup>
 
 </Project>

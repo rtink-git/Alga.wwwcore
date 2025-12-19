@@ -29,8 +29,8 @@ public sealed class Seo
 
         var url = $"{_config.Url}{_model.Path}";
 
-        if (_model.UrlCanonical != null && _model.UrlCanonical.Replace(_config.Url, "") != _model.Path)
-            _sb.Append($"<link rel=\"canonical\" href=\"{_config.Url}{_model.UrlCanonical}\" />");
+        //if (_model.UrlCanonical != null && _model.UrlCanonical.Replace(_config.Url, "") != _model.Path)
+        _sb.Append($"<link rel=\"canonical\" href=\"{_config.Url}{_model.UrlCanonical}\" />");
 
         if (!string.IsNullOrEmpty(_model.Title))
         {

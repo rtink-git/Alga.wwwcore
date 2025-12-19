@@ -22,6 +22,7 @@ class Html
     readonly string _bingSiteVerification;
     readonly string _msgPackScript;
     readonly string _telegramScript;
+    readonly string _finishTags;
 
     public Html(Config config)
     {
@@ -47,10 +48,11 @@ class Html
             _msgPackScript = "<script src=\"https://cdn.jsdelivr.net/npm/@msgpack/msgpack@2.8.0/dist.es5+umd/msgpack.min.js\"></script>";
         if (_config.UseTelegram)
             _telegramScript = "<script src=\"https://telegram.org/js/telegram-web-app.js\" crossorigin=\"anonymous\" defer></script>";
+
+        _finishTags = $"<link rel=\"manifest\" href=\"/manifest.{_config.CurrentVersion}.json\"><script src=\"/app.{_config.CurrentVersion}.js\" defer></script></head><body></body></html>";
     }
 
     const string _documentTag = "<!DOCTYPE html>";
-    const string _finishTags = "<link rel=\"manifest\" href=\"/manifest.json\"><script src=\"/app.js\" defer></script></head><body></body></html>";
     const string _startTags = "<head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">";
 
     // Streams a fully‑assembled HTML page to the provided <paramref name="writer"
@@ -78,7 +80,7 @@ class Html
             sw.Append(_googleFontsLink);
         }
 
-        if(seoM != null && !string.IsNullOrEmpty(seoM.ImageUrl)) sw.Append($"<link rel=\"preload\" as=\"image\" href=\"{seoM.ImageUrl}\">");
+        //if(seoM != null && !string.IsNullOrEmpty(seoM.ImageUrl)) sw.Append($"<link rel=\"preload\" as=\"image\" href=\"{seoM.ImageUrl}\">");
 
         sw.Append(_iconLink32);
         sw.Append(_iconLinkApple);

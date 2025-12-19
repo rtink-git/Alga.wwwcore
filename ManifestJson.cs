@@ -18,7 +18,14 @@ public sealed class ManifestJson
 
     public void Build()
     {
-        string filePath = Path.Combine("wwwroot", "manifest.json");
+
+        string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+        var filesToDelete = Directory.GetFiles(wwwrootPath, "*.json", SearchOption.TopDirectoryOnly).Where(f => Path.GetFileName(f).Contains("manifest"));
+        foreach (var file in filesToDelete)
+            File.Delete(file);
+
+
+        string filePath = Path.Combine("wwwroot", $"manifest.{_config.CurrentVersion}.json");
         
         using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
         

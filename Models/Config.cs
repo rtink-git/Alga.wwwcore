@@ -6,7 +6,7 @@ namespace Alga.wwwcore.Models;
 public class Config
 {
     // Current Version, format: 202507130901
-    internal string CurrentVersion { get; set; } = string.Empty;
+    public string CurrentVersion { get; set; } = string.Empty;
     // The base URL of the application depending on the build mode.
     // Example: "https://localhost:1234" (for dev) or "https://example.com" (for prod).
     public string Url { get; set; } = string.Empty;
@@ -71,6 +71,7 @@ public class Config
     public bool UseMessagePack { get; set; }
     public bool UseTelegram { get; set; }
 }
+
 
 
 

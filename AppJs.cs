@@ -3,11 +3,14 @@ class AppJs {
     readonly Models.Config _Config;
     public AppJs(Models.Config config) => _Config = config;
     internal void Create() {
+
+      string wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+      var filesToDelete = Directory.GetFiles(wwwrootPath, "*.js", SearchOption.TopDirectoryOnly).Where(f => Path.GetFileName(f).Contains("app"));
+      foreach (var file in filesToDelete)
+          File.Delete(file);
     
-    var url = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "app.js");
+    var url = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", $"app.{_Config.CurrentVersion}.js");
 
-
-        
     string jsCode = $@"
 // Function to check if the app is running inside Telegram Mini App
 
@@ -218,7 +221,7 @@ const registerServiceWorker = async () => {{
   }}
 
   try {{
-    const registration = await navigator.serviceWorker.register('/serviceworker.js');
+    const registration = await navigator.serviceWorker.register('/serviceworker.{_Config.CurrentVersion}.js');
     console.log('Service Worker зарегистрирован:', registration);
     registration.update().catch(() => {{}});
   }} catch (error) {{ console.error('Ошибка регистрации Service Worker:', error); }}
