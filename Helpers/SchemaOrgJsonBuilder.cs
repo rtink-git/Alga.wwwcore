@@ -60,12 +60,19 @@ public class SchemaOrgJsonBuilder : JsonBuilder
         string? legalName = null,
         string? alternateName = null,
         DateTime? foundingDate = null,
-        string[]? sameAs = null,
+        string?[]? sameAs = null,
         string? tel = null,
         string? email = null,
         string? areaServed = null
     )
     {
+        var sameAsQ = new HashSet<string>();
+
+        if (sameAs != null)
+            foreach (var i in sameAs)
+                if (!string.IsNullOrEmpty(i))
+                    sameAsQ.Add(i);
+
         WithBaseGroup("Organization", url, "#organization", name);
 
         WithDescription(description);
@@ -73,7 +80,7 @@ public class SchemaOrgJsonBuilder : JsonBuilder
         WithInLegalName(legalName);
         WithAlternateName(alternateName);
         WithFoundingDate(foundingDate);
-        Add("sameAs", sameAs);
+        Add("sameAs", sameAsQ);
         AddNested("contactPoint", cp =>
         {
             cp.WithType("ContactPoint");
@@ -223,7 +230,7 @@ public class SchemaOrgJsonBuilder : JsonBuilder
         return this;
     }
 
-    public SchemaOrgJsonBuilder WithPerson (
+    public SchemaOrgJsonBuilder WithPerson(
         string? name)
     {
         WithType("Person");
@@ -240,7 +247,7 @@ public class SchemaOrgJsonBuilder : JsonBuilder
         return this;
     }
 
-    public SchemaOrgJsonBuilder WithReview (
+    public SchemaOrgJsonBuilder WithReview(
         Rating rating,
         string? reviewBody,
         DateTime? datePublished,
@@ -249,9 +256,9 @@ public class SchemaOrgJsonBuilder : JsonBuilder
         WithType("Review");
         AddNested("reviewRating", i => i.WithRating(rating));
         WithReviewBody(reviewBody);
-        if(datePublished != null)
+        if (datePublished != null)
             Add("datePublished", datePublished.Value.ToString("yyyy-MM-dd"));
-        if(authorName != null)
+        if (authorName != null)
             AddNested("author", i => i.WithPerson(authorName));
         return this;
     }

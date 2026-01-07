@@ -3,7 +3,7 @@ namespace Alga.wwwcore.Helpers.YandexMarketLanguage.Models;
 public sealed class OfferModel
 {
     /// <summary>Unique offer ID</summary>
-    public required long Id { get; init; }
+    public required Guid Id { get; init; }
 
     /// <summary>Offer availability</summary>
     public bool Available { get; init; } = true;
@@ -18,7 +18,7 @@ public sealed class OfferModel
     public string CurrencyId { get; init; } = "RUB";
 
     /// <summary>Category ID</summary>
-    public required long CategoryId { get; init; }
+    public required Guid? CategoryId { get; init; }
 
     /// <summary>Product name</summary>
     public required string Name { get; init; }
