@@ -1,7 +1,6 @@
 using System.Text;
 using System.Xml;
 using System.Globalization;
-using System.Reflection.Metadata;
 
 namespace Alga.wwwcore.Helpers.YandexMarketLanguage;
 
@@ -25,10 +24,7 @@ public class Builder
         _shopUrl = shopUrl ?? throw new ArgumentNullException(nameof(shopUrl));
     }
 
-    public async Task<byte[]> GenerateXmlAsync(
-        IEnumerable<Models.OfferModel> offers,
-        IEnumerable<Models.CategoryModel>? categories = null,
-        IEnumerable<Models.CurrencyModel>? currencies = null)
+    public async Task<MemoryStream> GenerateXmlStreamAsync(Req req)
     {
         using var stream = new MemoryStream();
         await using var w = XmlWriter.Create(stream, XmlSettings);
@@ -45,9 +41,9 @@ public class Builder
 
         // Currencies (если переданы валюты)
         await w.WriteStartElementAsync(null, "currencies", null);
-        if (currencies != null)
+        if (req.Currencies != null)
         {
-            foreach (var c in currencies)
+            foreach (var c in req.Currencies)
             {
                 await w.WriteStartElementAsync(null, "currency", null);
                 await w.WriteAttributeStringAsync(null, "id", null, c.Id);
@@ -66,10 +62,10 @@ public class Builder
         await w.WriteEndElementAsync(); // </currencies>
 
         // Categories (если есть категории)
-        if (categories != null && categories.Any())
+        if (req.Categories != null && req.Categories.Any())
         {
             await w.WriteStartElementAsync(null, "categories", null);
-            foreach (var c in categories)
+            foreach (var c in req.Categories)
             {
                 await w.WriteStartElementAsync(null, "category", null);
                 await w.WriteAttributeStringAsync(null, "id", null, c.Id.ToString());
@@ -83,7 +79,7 @@ public class Builder
 
         // Offers (обязательная часть, всегда будет)
         await w.WriteStartElementAsync(null, "offers", null);
-        foreach (var o in offers)
+        foreach (var o in req.Offers)
         {
             await w.WriteStartElementAsync(null, "offer", null);
             await w.WriteAttributeStringAsync(null, "id", null, o.Id.ToString());
@@ -92,7 +88,7 @@ public class Builder
             await w.WriteElementStringAsync(null, "url", null, o.Url);
             await w.WriteElementStringAsync(null, "price", null, o.Price.ToString("0.##", CultureInfo.InvariantCulture));
             await w.WriteElementStringAsync(null, "currencyId", null, o.CurrencyId);
-            await w.WriteElementStringAsync(null, "categoryId", null, o.CategoryId.ToString());
+            // await w.WriteElementStringAsync(null, "categoryId", null, o.CategoryId.ToString() ?? string.Empty);
             await w.WriteElementStringAsync(null, "name", null, o.Name);
 
             if (!string.IsNullOrEmpty(o.Description))
@@ -154,6 +150,13 @@ public class Builder
         await w.WriteEndDocumentAsync();
         await w.FlushAsync();
 
+        await w.FlushAsync();
+        return stream;
+    }
+
+    public async Task<byte[]> GenerateXmlInBytesAsync(Req req)
+    {
+        await using var stream = await GenerateXmlStreamAsync(req);
         return stream.ToArray();
     }
 }

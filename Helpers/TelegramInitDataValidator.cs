@@ -5,38 +5,41 @@ using System.Collections.Specialized;
 using System.Web;
 
 namespace Alga.wwwcore.Helpers;
+
 public static class TelegramInitDataValidator
 {
     public class UserData
     {
         public long id { get; set; }
-        public string first_name { get; set; }
-        public string last_name { get; set; }
-        public string username { get; set; }
-        public string language_code { get; set; }
+        public string? first_name { get; set; }
+        public string? last_name { get; set; }
+        public string? username { get; set; }
+        public string? language_code { get; set; }
         public bool allows_write_to_pm { get; set; }
-        public string photo_url { get; set; }
+        public string? photo_url { get; set; }
     }
 
     public class InitData
     {
-        public UserData user { get; set; }
-        public string chat_instance { get; set; }
-        public string chat_type { get; set; }
+        public UserData? user { get; set; }
+        public string? chat_instance { get; set; }
+        public string? chat_type { get; set; }
         public long auth_date { get; set; }
-        public string hash { get; set; }
-        public string signature { get; set; }
+        public string? hash { get; set; }
+        public string? signature { get; set; }
     }
 
-    public static InitData Parse(string initData) {
+    public static InitData Parse(string initData)
+    {
         if (string.IsNullOrEmpty(initData)) throw new ArgumentNullException(nameof(initData));
 
         var parsed = HttpUtility.ParseQueryString(initData);
-        
+
         if (parsed["user"] == null) throw new ArgumentException("Missing 'user' in initData");
         if (parsed["auth_date"] == null) throw new ArgumentException("Missing 'auth_date' in initData");
 
-        return new InitData {
+        return new InitData
+        {
             user = JsonSerializer.Deserialize<UserData>(parsed["user"]!)!,
             chat_instance = parsed["chat_instance"] ?? string.Empty,
             chat_type = parsed["chat_type"] ?? string.Empty,
@@ -44,7 +47,7 @@ public static class TelegramInitDataValidator
             hash = parsed["hash"] ?? string.Empty,
             signature = parsed["signature"] ?? string.Empty
         };
-}
+    }
 
     public static bool IsValid(string initData, string botToken)
     {
@@ -52,7 +55,7 @@ public static class TelegramInitDataValidator
             return false;
 
         NameValueCollection parsed = HttpUtility.ParseQueryString(initData);
-        string receivedHash = parsed["hash"];
+        string? receivedHash = parsed["hash"];
         if (string.IsNullOrEmpty(receivedHash))
             return false;
 
