@@ -1,19 +1,17 @@
 ﻿using System.Buffers;
-using Microsoft.Extensions.Logging;
 
 namespace Alga.wwwcore;
 
 public class Root
 {
-    readonly ILogger? _logger;
     Core.IInitializer _coreInitializer { get; }
 
-    public Root(ClientOptions clientOptions, bool isDebug, ILogger? logger)
-    {
-        ClientOptionsValidator.Do(clientOptions);
 
-        _logger = logger;
-        _coreInitializer = new Core.Initializer(clientOptions, isDebug);
+    public Root(ClientOptions clientOptions, bool isDebug)
+    {
+        var getClientOptionsRes = Operations.GetClientOptions.H.Do(clientOptions);
+
+        _coreInitializer = new Core.Initializer(getClientOptionsRes, isDebug);
         _coreInitializer.Do();
     }
 

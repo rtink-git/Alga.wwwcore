@@ -1,5 +1,4 @@
 using NUglify;
-using NUglify.JavaScript;
 using System.Text;
 
 namespace Alga.wwwcore.Core.HtmlGenerator.PageCssFile;

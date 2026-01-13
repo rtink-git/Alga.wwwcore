@@ -1,60 +1,43 @@
-namespace Alga.wwwcore;
+namespace Alga.wwwcore.Operations.GetClientOptions;
 
-public class ClientOptions
-{
+public record Res(
     // The base URL of the application depending on the build mode.
     // Example: "https://localhost:1234" (for dev) or "https://example.com" (for prod).
-    public required string BaseUrl { get; init; }
-
+    string BaseUrl,
     // The full name of the application. Example: "My Awesome App".
-    public required string Name { get; init; }
-
+    string Name,
     // Short name or abbreviation of the app. Example: "AwesomeApp".
-    public required string NameShort { get; init; }
-
+    string NameShort,
     // Brief description of the app. Can be used in meta tags, tooltips, etc.
-    public required string Description { get; init; }
-
+    string Description,
     // The color used for background while app loads (for PWAs).
     // Example: "#FFFFFF" for white or "#000000" for black.
-    public string BackgroundColor { get; set; } = "#FFFFFF";
-
+    string BackgroundColor,
     // Primary theme color for browser UI (used in manifest and meta).
-    public string ThemeColor { get; set; } = "#FFFFFF";
-
+    string ThemeColor,
     // List of domains to preconnect for faster resource loading.
     // Example: { "api.example.com", "cdn.example.com" }
-    public string[]? PreconnectUrls { get; init; }
-
+    string[]? PreconnectUrls,
     // List of static URLs to be pre-cached by service worker.
     // Example: ["/index.html", "/app.js", "/style.css"]
-    public string[]? CacheUrls { get; init; }
-
-    public bool UseTelegram { get; set; }
-    public bool UseMessagePack { get; set; }
-
+    string[]? CacheUrls,
+    bool UseTelegram,
+    bool UseMessagePack,
     // https://www.bing.com/webmasters
-    public string? BingSiteVerification { get; init; }
-
+    string? BingSiteVerification,
     // Twitter handle for metadata. Example: "@example".
-    public string? TwitterSite { get; init; }
-
+    string? TwitterSite,
     // Webmaster yandex: https://webmaster.yandex.kz/
-    public string? YandexVerificationCode { get; init; }
-
+    string? YandexVerificationCode,
     // Yandex Metrika tracking ID. Example: "12345678".
-    public string? YandexMetrikaCode { get; init; }
-
+    string? YandexMetrikaCode,
     // Google Analytics tracking ID. Example: "G-XXXXXXX".
-    public string? GoogleAnalyticsCode { get; init; }
-
+    string? GoogleAnalyticsCode,
     // Google Fonts CSS URL. Example: "https://fonts.googleapis.com/css2?family=Roboto&display=swap"
-    public string? GoogleFontsUrl { get; init; }
-
+    string? GoogleFontsUrl,
     // https://search.google.com/
-    public string? GoogleSiteVerification { get; init; }
-
+    string? GoogleSiteVerification,
     // URL to offline fallback page used when offline.
     // Example: "/offline"
-    public string? OfflinePageUrlPath { get; init; }
-}
+    string? OfflinePageUrlPath
+);

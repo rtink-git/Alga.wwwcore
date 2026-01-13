@@ -13,9 +13,9 @@ public class Initializer : IInitializer
     public string AppNameShort { get; init; }
     public string? AppTwitterSite { get; init; }
 
-    readonly ClientOptions _clientOptions;
+    readonly Operations.GetClientOptions.Res _clientOptions;
 
-    public Initializer(ClientOptions clientOptions, bool isDebug)
+    public Initializer(Operations.GetClientOptions.Res clientOptions, bool isDebug)
     {
         _clientOptions = clientOptions;
 
