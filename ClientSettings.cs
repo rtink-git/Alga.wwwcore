@@ -1,6 +1,6 @@
 namespace Alga.wwwcore;
 
-public class ClientOptions
+public sealed class ClientSettings
 {
     // The base URL of the application depending on the build mode.
     // Example: "https://localhost:1234" (for dev) or "https://example.com" (for prod).
@@ -17,10 +17,10 @@ public class ClientOptions
 
     // The color used for background while app loads (for PWAs).
     // Example: "#FFFFFF" for white or "#000000" for black.
-    public string BackgroundColor { get; set; } = "#FFFFFF";
+    public string BackgroundColor { get; init; } = "#FFFFFF";
 
     // Primary theme color for browser UI (used in manifest and meta).
-    public string ThemeColor { get; set; } = "#FFFFFF";
+    public string ThemeColor { get; init; } = "#FFFFFF";
 
     // List of domains to preconnect for faster resource loading.
     // Example: { "api.example.com", "cdn.example.com" }
@@ -30,8 +30,9 @@ public class ClientOptions
     // Example: ["/index.html", "/app.js", "/style.css"]
     public string[]? CacheUrls { get; init; }
 
-    public bool UseTelegram { get; set; }
-    public bool UseMessagePack { get; set; }
+    public bool UseTelegram { get; init; }
+
+    public bool UseMessagePack { get; init; }
 
     // https://www.bing.com/webmasters
     public string? BingSiteVerification { get; init; }
@@ -57,4 +58,20 @@ public class ClientOptions
     // URL to offline fallback page used when offline.
     // Example: "/offline"
     public string? OfflinePageUrlPath { get; init; }
+
+
+    public void Validate()
+    {
+        if (string.IsNullOrWhiteSpace(BaseUrl))
+            throw new InvalidOperationException($"{nameof(BaseUrl)} is missing or empty.");
+
+        if (string.IsNullOrWhiteSpace(Name))
+            throw new InvalidOperationException($"{nameof(Name)} is missing or empty.");
+
+        if (string.IsNullOrWhiteSpace(NameShort))
+            throw new InvalidOperationException($"{nameof(NameShort)} is missing or empty.");
+
+        if (string.IsNullOrWhiteSpace(Description))
+            throw new InvalidOperationException($"{nameof(Description)} is missing or empty.");
+    }
 }

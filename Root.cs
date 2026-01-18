@@ -2,16 +2,21 @@
 
 namespace Alga.wwwcore;
 
-public class Root
+public sealed class Root
 {
+    public ClientSettings ClientSettings;
+
     Core.IInitializer _coreInitializer { get; }
 
-
-    public Root(ClientOptions clientOptions, bool isDebug)
+    public Root(ClientSettings clientSettings, bool isDebug)
     {
-        var getClientOptionsRes = Operations.GetClientOptions.H.Do(clientOptions);
+        if (clientSettings == null) throw new ArgumentException(nameof(clientSettings));
 
-        _coreInitializer = new Core.Initializer(getClientOptionsRes, isDebug);
+        clientSettings.Validate();
+
+        ClientSettings = clientSettings;
+
+        _coreInitializer = new Core.Initializer(clientSettings, isDebug);
         _coreInitializer.Do();
     }
 

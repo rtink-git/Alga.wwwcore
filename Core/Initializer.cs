@@ -13,15 +13,15 @@ public class Initializer : IInitializer
     public string AppNameShort { get; init; }
     public string? AppTwitterSite { get; init; }
 
-    readonly Operations.GetClientOptions.Res _clientOptions;
+    readonly ClientSettings _clientOptions;
 
-    public Initializer(Operations.GetClientOptions.Res clientOptions, bool isDebug)
+    public Initializer(ClientSettings clientSettings, bool isDebug)
     {
-        _clientOptions = clientOptions;
+        _clientOptions = clientSettings;
 
-        BaseUrl = clientOptions.BaseUrl;
-        AppNameShort = clientOptions.NameShort;
-        AppTwitterSite = clientOptions.TwitterSite;
+        BaseUrl = clientSettings.BaseUrl;
+        AppNameShort = clientSettings.NameShort;
+        AppTwitterSite = clientSettings.TwitterSite;
         IsDebug = isDebug;
         BaseMetaHeadHtml = new StringBuilder();
     }

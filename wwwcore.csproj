@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
     <PackageReference Include="NUglify" Version="1.21.17" />
   </ItemGroup>
 
@@ -30,8 +29,6 @@
     <Folder Include="Core/HtmlGenerator/PageCssFile/" />
     <Folder Include="Core/HtmlGenerator/PageJsFile/" />
     <Folder Include="Core/UseCases/" />
-    <Folder Include="Operations/" />
-    <Folder Include="Operations/GetClientOptions/" />
   </ItemGroup>
 
 </Project>
