@@ -1,85 +1,163 @@
+using System.Buffers;
 using System.Text;
 using System.Runtime.CompilerServices;
+using System.Globalization;
 
 namespace Alga.wwwcore.Core.HtmlGenerator.SeoMetaGenerator;
 
 sealed class Builder
 {
-    StringBuilder _outputSb;
-    public Builder(StringBuilder outputSb) => _outputSb = outputSb;
+    static readonly Encoding Utf8 = Encoding.UTF8;
+    static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
 
-    public void Do(Req req)
+    static readonly byte[] MetaNamePrefix = Encoding.UTF8.GetBytes("<meta name=\"");
+
+    public void Do(Req req, IBufferWriter<byte> writer)
     {
         var spo = req.SeoPageOptions;
 
         // robots
 
-        AppendMeta("robots", spo.Robot ?? "noindex, nofollow");
+        WriteMeta("robots", spo.Robot);
 
         // canonical
 
-        var url = $"{req.Url}{spo.Path}";
-
-        _outputSb.Append($"<link rel=\"canonical\" href=\"{req.Url}{spo.UrlCanonical}\" />");
+        if (spo.UrlCanonical != null)
+        {
+            WriteString("<link rel=\"canonical\" href=\"");
+            WriteString(req.Url);
+            WriteString(spo.UrlCanonical);
+            WriteString("\" />");
+        }
 
         if (string.IsNullOrEmpty(spo.Title)) return;
 
-        _outputSb.Append($"<title>{spo.Title}</title>");
-        AppendMeta("description", spo.Description);
+        WriteString("<title>");
+        WriteString(spo.Title);
+        WriteString("</title>");
+
+        WriteMeta("description", spo.Description);
 
         // The Open Graph protocol. https://ogp.me
 
-        AppendOG("og:type", spo.TypeOg);
-        AppendOG("og:url", url);
-        AppendOG("og:title", spo.Title);
-        AppendOG("og:description", spo.Description);
-        AppendOG("og:site_name", req.NameShort);
-        AppendOG("og:locale", spo.Lang);
+        WriteOG("og:type", spo.TypeOg);
+        if (!string.IsNullOrEmpty(req.Url) || !string.IsNullOrEmpty(spo.Path)) WriteOGUrl(req.Url, spo.Path);
+        WriteOG("og:title", spo.Title);
+        WriteOG("og:description", spo.Description);
+        WriteOG("og:site_name", req.NameShort);
+        WriteOG("og:locale", spo.Lang);
+        if (spo.ItemPrice.HasValue) WriteOG("product:price:amount", spo.ItemPrice.Value.ToString(Invariant));
+        WriteOG("product:price:currency", spo.ItemCurrency);
+        WriteOG("product:availability", spo.ItemAvailability);
 
-        AppendOG("product:price:amount", spo.ItemPrice?.ToString().Replace(",", "."));
-        AppendOG("product:price:currency", spo.ItemCurrency);
-        AppendOG("product:availability", spo.ItemAvailability);
-
-        AppendOG("og:image", spo.ImageUrl);
-        AppendOG("og:image:type", spo.ImageEncodingFormat);
-        AppendOG("og:image:alt", spo.Title);
+        WriteOG("og:image", spo.ImageUrl);
+        WriteOG("og:image:type", spo.ImageEncodingFormat);
+        WriteOG("og:image:alt", spo.Title);
         if (spo.ImageWidth > 0 && spo.ImageHeight > 0)
         {
-            AppendOG("og:image:width", spo.ImageWidth.ToString());
-            AppendOG("og:image:height", spo.ImageHeight.ToString());
+            WriteOG("og:image:width", spo.ImageWidth.ToString());
+            WriteOG("og:image:height", spo.ImageHeight.ToString());
         }
 
         // Twitter
 
         if (!string.IsNullOrEmpty(req.TwitterSite))
         {
-            AppendMeta("twitter:card", "summary_large_image");
-            AppendMeta("twitter:url", url);
-            AppendMeta("twitter:title", spo.Title);
-            AppendMeta("twitter:description", spo.Description);
-            AppendMeta("twitter:site", req.TwitterSite);
-            AppendMeta("twitter:image", spo.ImageUrl);
-            AppendMeta("twitter:image:alt", spo.Title);
+            WriteMeta("twitter:card", "summary_large_image");
+            WriteMetaUrl("twitter:url", req.Url, spo.Path);
+            WriteMeta("twitter:title", spo.Title);
+            WriteMeta("twitter:description", spo.Description);
+            WriteMeta("twitter:site", req.TwitterSite);
+            WriteMeta("twitter:image", spo.ImageUrl);
+            WriteMeta("twitter:image:alt", spo.Title);
         }
 
         // --- JSON-LD ---
 
-        if (spo.SchemaOrgsJson?.Length > 32) _outputSb.Append($"<script type=\"application/ld+json\">{spo.SchemaOrgsJson}</script>");
-    }
+        if (spo.SchemaOrgsJson?.Length > 32)
+        {
+            WriteString("<script type=\"application/ld+json\">");
+            WriteString(spo.SchemaOrgsJson);
+            WriteString("</script>");
+        }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AppendMeta(string name, string? content)
-    {
-        if (string.IsNullOrEmpty(content)) return;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteMeta(string name, string? content)
+        {
+            if (string.IsNullOrEmpty(content)) return;
 
-        _outputSb.Append($"<meta name=\"{name}\" content=\"{content}\">");
-    }
+            WriteString("<meta name=\"");
+            WriteString(name);
+            WriteString("\" content=\"");
+            WriteString(content);
+            WriteString("\">");
+        }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void AppendOG(string property, string? content)
-    {
-        if (string.IsNullOrEmpty(content)) return;
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteOG(string property, string? content)
+        {
+            if (string.IsNullOrEmpty(content)) return;
 
-        _outputSb.Append($"<meta property=\"{property}\" content=\"{content}\">");
+            WriteString("<meta property=\"");
+            WriteString(property);
+            WriteString("\" content=\"");
+            WriteString(content);
+            WriteString("\">");
+        }
+
+        // og:url = baseUrl + path (без строки-склейки)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteOGUrl(string? baseUrl, string? path)
+        {
+            if (string.IsNullOrEmpty(baseUrl) && string.IsNullOrEmpty(path))
+                return;
+
+            WriteString("<meta property=\"og:url\" content=\"");
+
+            if (!string.IsNullOrEmpty(baseUrl))
+                WriteString(baseUrl);
+
+            if (!string.IsNullOrEmpty(path))
+                WriteString(path);
+
+            WriteString("\">");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteMetaUrl(string name, string? baseUrl, string? path)
+        {
+            if (string.IsNullOrEmpty(baseUrl) && string.IsNullOrEmpty(path))
+                return;
+
+            WriteString("<meta name=\"");
+            WriteString(name);
+            WriteString("\" content=\"");
+
+            if (!string.IsNullOrEmpty(baseUrl))
+                WriteString(baseUrl);
+
+            if (!string.IsNullOrEmpty(path))
+                WriteString(path);
+
+            WriteString("\">");
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteString(string s)
+        {
+            int byteCount = Utf8.GetByteCount(s);
+            Span<byte> span = writer.GetSpan(byteCount);
+            int written = Utf8.GetBytes(s, span);
+            writer.Advance(written);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        void WriteSpan(ReadOnlySpan<char> s)
+        {
+            int byteCount = Utf8.GetByteCount(s);
+            Span<byte> span = writer.GetSpan(byteCount);
+            int written = Utf8.GetBytes(s, span);
+            writer.Advance(written);
+        }
     }
 }
