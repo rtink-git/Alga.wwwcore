@@ -13,6 +13,9 @@ public class WriteHtml
     {
         if (!_initializer.Pages.TryGetValue(UISName, out var pageVal)) return;
 
+        if (seoPageOptions != null && seoPageOptions.UrlCanonical == null)
+            seoPageOptions.UrlCanonical = seoPageOptions.Path;
+
         var htmlCheckSum = JsonSerializer.Serialize(seoPageOptions).Length + (pageModelAsJson != null ? pageModelAsJson.Length : 0);
 
         if (pageVal.Html != null && pageVal.HtmlCheckSum == htmlCheckSum) writer.Write(pageVal.Html);
