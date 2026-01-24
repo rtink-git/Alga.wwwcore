@@ -17,7 +17,6 @@ public sealed class Root
         ClientSettings = clientSettings;
 
         _coreInitializer = new Core.Initializer(clientSettings, isDebug);
-        _coreInitializer.Do();
     }
 
     public void WriteHtml(IBufferWriter<byte> writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null) => new Core.UseCases.WriteHtml(_coreInitializer).Do(writer, UISName, seoPageOptions, pageModelAsJson);

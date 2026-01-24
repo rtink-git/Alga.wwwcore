@@ -88,6 +88,11 @@ sealed class Builder
     }
 
     // Method for reading the schema from a JSON file.
-    PageModel? ReadSchemeJson(string filePath) => JsonSerializer.Deserialize<PageModel>(File.ReadAllText(filePath));
+    PageModel? ReadSchemeJson(string filePath)
+    {
+        using var fs = File.OpenRead(filePath);
+        return JsonSerializer.Deserialize<PageModel>(fs);
+    }
+
     string ReplacePrefix(string path, string prefix = "/") => path.Replace("\\", "/");
 }

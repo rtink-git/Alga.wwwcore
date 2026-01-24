@@ -6,9 +6,9 @@ namespace Alga.wwwcore.Core;
 public class Initializer : IInitializer
 {
     public bool IsDebug { get; init; }
-    public FrozenDictionary<string, SchemesGenerator.PageModel> Pages { get; set; } = FrozenDictionary<string, SchemesGenerator.PageModel>.Empty; // Frozen page schemes collection. All directories in wwwroot that contain scheme.json
-    public FrozenDictionary<string, HashSet<string>> PagesModules { get; set; } = FrozenDictionary<string, HashSet<string>>.Empty; // Frozen pages modules schemes collection. Frozen collection of components that use the pages.
-    public StringBuilder BaseMetaHeadHtml { get; set; }
+    public FrozenDictionary<string, SchemesGenerator.PageModel> Pages { get; private set; } = FrozenDictionary<string, SchemesGenerator.PageModel>.Empty; // Frozen page schemes collection. All directories in wwwroot that contain scheme.json
+    public FrozenDictionary<string, HashSet<string>> PagesModules { get; private set; } = FrozenDictionary<string, HashSet<string>>.Empty; // Frozen pages modules schemes collection. Frozen collection of components that use the pages.
+    public StringBuilder BaseMetaHeadHtml { get; private set; }
     public string BaseUrl { get; init; }
     public string AppNameShort { get; init; }
     public string? AppTwitterSite { get; init; }
@@ -24,15 +24,11 @@ public class Initializer : IInitializer
         AppTwitterSite = clientSettings.TwitterSite;
         IsDebug = isDebug;
         BaseMetaHeadHtml = new StringBuilder();
-    }
 
-    public void Do()
-    {
         var version = DateTime.UtcNow.ToString("yyyyMMddHHmm");
         var directoryPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
 
         if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Required wwwroot directory not found at: {directoryPath}");
-
 
         var reqBaseMetaGenerator = new HtmlGenerator.BaseMetaGenerator.Req() { IsDebug = IsDebug, Version = version, BingSiteVerification = _clientOptions.BingSiteVerification, GoogleAnalyticsCode = _clientOptions.GoogleAnalyticsCode, GoogleFontsUrl = _clientOptions.GoogleFontsUrl, GoogleSiteVerification = _clientOptions.GoogleSiteVerification, PreconnectUrls = _clientOptions.PreconnectUrls, ThemeColor = _clientOptions.ThemeColor, UseMessagePack = _clientOptions.UseMessagePack, UseTelegram = _clientOptions.UseTelegram, YandexMetrikaCode = _clientOptions.YandexMetrikaCode, YandexVerificationCode = _clientOptions.YandexVerificationCode };
         var baseMetaGeneratorDone = new HtmlGenerator.BaseMetaGenerator.Builder().Do(reqBaseMetaGenerator);

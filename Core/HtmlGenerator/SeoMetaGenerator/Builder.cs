@@ -72,11 +72,7 @@ sealed class Builder
     {
         if (string.IsNullOrEmpty(content)) return;
 
-        _outputSb.Append("<meta name=\"");
-        _outputSb.Append(name);
-        _outputSb.Append("\" content=\"");
-        _outputSb.Append(content);
-        _outputSb.Append("\">");
+        _outputSb.Append($"<meta name=\"{name}\" content=\"{content}\">");
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,10 +80,6 @@ sealed class Builder
     {
         if (string.IsNullOrEmpty(content)) return;
 
-        _outputSb.Append("<meta property=\"");
-        _outputSb.Append(property);
-        _outputSb.Append("\" content=\"");
-        _outputSb.Append(content);
-        _outputSb.Append("\">");
+        _outputSb.Append($"<meta property=\"{property}\" content=\"{content}\">");
     }
 }

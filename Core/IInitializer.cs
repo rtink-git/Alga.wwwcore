@@ -12,6 +12,4 @@ public interface IInitializer
     string BaseUrl { get; }
     string AppNameShort { get; }
     string? AppTwitterSite { get; }
-
-    void Do();
 }

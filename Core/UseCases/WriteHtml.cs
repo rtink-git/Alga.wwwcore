@@ -12,8 +12,9 @@ public class WriteHtml
     public void Do(IBufferWriter<byte> writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null)
     {
         if (!_initializer.Pages.TryGetValue(UISName, out var pageVal)) return;
+        if (seoPageOptions == null) return;
 
-        if (seoPageOptions != null && seoPageOptions.UrlCanonical == null)
+        if (seoPageOptions.UrlCanonical == null)
             seoPageOptions.UrlCanonical = seoPageOptions.Path;
 
         var htmlCheckSum = JsonSerializer.Serialize(seoPageOptions).Length + (pageModelAsJson != null ? pageModelAsJson.Length : 0);

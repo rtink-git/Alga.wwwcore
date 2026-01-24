@@ -1,6 +1,6 @@
 namespace Alga.wwwcore.Core.SchemesGenerator;
 
-public class PageModel
+public sealed class PageModel
 {
     public string? script { get; set; }
     public string? style { get; set; }

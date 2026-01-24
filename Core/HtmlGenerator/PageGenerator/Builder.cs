@@ -9,10 +9,8 @@ class Builder
     {
         var sb = new StringBuilder();
 
-        sb.Append("<!DOCTYPE html>");
-        sb.Append("<html>");
-        sb.Append("<head>");
-        sb.Append(req.BaseMetaSb.ToString());
+        sb.Append("<!DOCTYPE html><html><head>");
+        sb.Append(req.BaseMetaSb);
 
         if (req.SeoMetaReq != null) new SeoMetaGenerator.Builder(sb).Do(req.SeoMetaReq);
 
