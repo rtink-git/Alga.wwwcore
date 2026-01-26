@@ -39,8 +39,8 @@ public class Builder
 
         if (!string.IsNullOrEmpty(req.ThemeColor)) sb.Append($$"""<meta name="theme-color" content="{{req.ThemeColor}}">""");
 
-        if (req.IsDebug) sb.Append($"<link rel=\"manifest\" href=\"/manifest.{req.Version}.json\">");
-        if (req.IsDebug) sb.Append($"<script src=\"/app.{req.Version}.js\" defer></script>");
+        if (!req.IsDebug) sb.Append($"<link rel=\"manifest\" href=\"/manifest.{req.Version}.json\">");
+        if (!req.IsDebug) sb.Append($"<script src=\"/app.{req.Version}.js\" defer></script>");
 
         return sb;
     }
