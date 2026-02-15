@@ -1,4 +1,4 @@
-using System.Buffers;
+using System.IO.Pipelines;
 using System.Text;
 using System.Runtime.CompilerServices;
 
@@ -8,7 +8,7 @@ class Builder
 {
     static readonly Encoding Utf8 = Encoding.UTF8;
 
-    public void WriteTo(IBufferWriter<byte> writer, Req req)
+    public void WriteTo(PipeWriter writer, Req req)
     {
         WriteString("<!DOCTYPE html><html><head>");
         WriteString(req.BaseMetaSb.ToString());

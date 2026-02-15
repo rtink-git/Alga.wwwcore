@@ -1,4 +1,4 @@
-﻿using System.Buffers;
+﻿using System.IO.Pipelines;
 
 namespace Alga.wwwcore;
 
@@ -19,5 +19,5 @@ public sealed class Root
         _coreInitializer = new Core.Initializer(clientSettings, isDebug);
     }
 
-    public void WriteHtml(IBufferWriter<byte> writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null) => new Core.UseCases.WriteHtml(_coreInitializer).Do(writer, UISName, seoPageOptions, pageModelAsJson);
+    public void WriteHtml(PipeWriter writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null) => new Core.UseCases.WriteHtml(_coreInitializer).Do(writer, UISName, seoPageOptions, pageModelAsJson);
 }

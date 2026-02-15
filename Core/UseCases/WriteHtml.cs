@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Text.Json;
+using System.IO.Pipelines;
 
 namespace Alga.wwwcore.Core.UseCases;
 
@@ -9,7 +10,7 @@ public class WriteHtml
 
     public WriteHtml(IInitializer initializer) => _initializer = initializer;
 
-    public void Do(IBufferWriter<byte> writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null)
+    public void Do(PipeWriter writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null)
     {
         if (!_initializer.Pages.TryGetValue(UISName, out var pageVal)) return;
         if (seoPageOptions == null) return;

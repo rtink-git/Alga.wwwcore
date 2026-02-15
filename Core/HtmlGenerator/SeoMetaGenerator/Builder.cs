@@ -1,4 +1,4 @@
-using System.Buffers;
+using System.IO.Pipelines;
 using System.Text;
 using System.Runtime.CompilerServices;
 using System.Globalization;
@@ -12,7 +12,7 @@ sealed class Builder
 
     static readonly byte[] MetaNamePrefix = Encoding.UTF8.GetBytes("<meta name=\"");
 
-    public void Do(Req req, IBufferWriter<byte> writer)
+    public void Do(Req req, PipeWriter writer)
     {
         var spo = req.SeoPageOptions;
 

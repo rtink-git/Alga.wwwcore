@@ -44,7 +44,7 @@ public static class Builder
                     new XElement(Ns + "loc", i.Loc)
                 );
                 if (i.LastMod.HasValue)
-                    el.Add(new XElement(Ns + "lastmod", i.LastMod.Value.ToString("yyyy-MM-dd")));
+                    el.Add(new XElement(Ns + "lastmod", i.LastMod.Value.ToString("yyyy-MM-ddTHH:mm:sszzz"))); //.ToString("yyyy-MM-dd")
                 return el;
             })
         );
@@ -88,7 +88,7 @@ public static class Builder
             );
 
             if (u.LastMod.HasValue)
-                url.Add(new XElement(Ns + "lastmod", u.LastMod.Value.ToString("yyyy-MM-dd")));
+                url.Add(new XElement(Ns + "lastmod", u.LastMod.Value.ToString("yyyy-MM-ddTHH:mm:sszzz")));
 
             if (!string.IsNullOrWhiteSpace(u.ChangeFreq))
                 url.Add(new XElement(Ns + "changefreq", u.ChangeFreq));
@@ -161,7 +161,7 @@ public static class Builder
                         new XElement(NewsNs + "language", n.Language)
                     ),
                     new XElement(NewsNs + "title", n.Title),
-                    n.PublicationDate.HasValue ? new XElement(NewsNs + "publication_date", n.PublicationDate.Value.ToString("yyyy-MM-dd")) : null
+                    n.PublicationDate.HasValue ? new XElement(NewsNs + "publication_date", n.PublicationDate.Value.ToString("yyyy-MM-ddTHH:mm:sszzz")) : null
                 );
                 url.Add(newsEl);
             }
