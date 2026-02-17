@@ -12,7 +12,7 @@ public sealed class Root
     {
         if (clientSettings == null) throw new ArgumentException(nameof(clientSettings));
 
-        clientSettings.Validate();
+        // clientSettings.Validate();
 
         ClientSettings = clientSettings;
 

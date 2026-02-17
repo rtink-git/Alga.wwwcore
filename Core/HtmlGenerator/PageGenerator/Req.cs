@@ -5,10 +5,10 @@ namespace Alga.wwwcore.Core.HtmlGenerator.PageGenerator;
 
 sealed public class Req
 {
-    public required bool IsDebug { get; init; }
-    public required StringBuilder BaseMetaSb { get; init; }
-    public required SchemesGenerator.PageModel PageScheme { get; init; }
-    public required FrozenDictionary<string, HashSet<string>> PagesModules { get; init; }
-    public required SeoMetaGenerator.Req SeoMetaReq { get; init; }
-    public string? PageModelAsJson { get; init; }
+    public required bool IsDebug { get; set; }
+    public required StringBuilder BaseMetaSb { get; set; }
+    public required SchemesGenerator.PageModel PageScheme { get; set; }
+    public required FrozenDictionary<string, HashSet<string>> PagesModules { get; set; }
+    public required SeoMetaGenerator.Req SeoMetaReq { get; set; }
+    public string? PageModelAsJson { get; set; }
 }

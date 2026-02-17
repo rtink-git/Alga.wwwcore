@@ -91,7 +91,7 @@ sealed class Builder
     PageModel? ReadSchemeJson(string filePath)
     {
         using var fs = File.OpenRead(filePath);
-        return JsonSerializer.Deserialize<PageModel>(fs);
+        return JsonSerializer.Deserialize<PageModel>(fs, PageModelJsonContext.Default.PageModel);
     }
 
     string ReplacePrefix(string path, string prefix = "/") => path.Replace("\\", "/");

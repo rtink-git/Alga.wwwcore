@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Text.Json;
+
 using System.IO.Pipelines;
 
 namespace Alga.wwwcore.Core.UseCases;
@@ -18,7 +19,7 @@ public class WriteHtml
         if (seoPageOptions.UrlCanonical == null)
             seoPageOptions.UrlCanonical = seoPageOptions.Path;
 
-        var htmlCheckSum = JsonSerializer.Serialize(seoPageOptions).Length + (pageModelAsJson != null ? pageModelAsJson.Length : 0);
+        var htmlCheckSum = JsonSerializer.Serialize(seoPageOptions, SeoPageOptionsJsonContext.Default.SeoPageOptions).Length + (pageModelAsJson != null ? pageModelAsJson.Length : 0);
 
         if (pageVal.Html != null && pageVal.HtmlCheckSum == htmlCheckSum) writer.Write(pageVal.Html);
         else
