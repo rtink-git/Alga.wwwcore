@@ -1,62 +1,55 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
+using Alga.wwwcore.Core.FileGenerators.ManifestJson;
 
 namespace Alga.wwwcore.Core.FileGenerators.ManifestJson;
 
-sealed class Builder
+internal sealed class Builder
 {
-    private static readonly JsonSerializerOptions _jsonOptions = new()
-    {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull,
-        WriteIndented = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
     public void Do(Req req)
     {
-        var filesToDelete = Directory.GetFiles(req.DirectoryPath, "*.json", SearchOption.TopDirectoryOnly).Where(f => Path.GetFileName(f).Contains("manifest"));
+        var filesToDelete = Directory.GetFiles(req.DirectoryPath, "*.json", SearchOption.TopDirectoryOnly)
+            .Where(f => Path.GetFileName(f).Contains("manifest"));
+
         foreach (var file in filesToDelete)
             File.Delete(file);
 
         string filePath = Path.Combine(req.DirectoryPath, $"manifest.{req.Version}.json");
 
-        using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
-
-
-        JsonSerializer.Serialize(fs, new
+        var manifest = new ManifestModel
         {
-            id = "/",
-            scope = "/",
-            start_url = "/",
-            display = "standalone",
-            name = req.Name,
-            short_name = req.NameShort,
-            description = req.Description,
-            background_color = req.BackgroundColor,
-            theme_color = req.ThemeColor,
-            icons = new[]
+            Name = req.Name,
+            ShortName = req.NameShort,
+            Description = req.Description,
+            BackgroundColor = req.BackgroundColor,
+            ThemeColor = req.ThemeColor,
+            Icons = new[]
             {
-                new { src = "/Modules/Total/content/Icon-192.png", type = "image/png", sizes = "192x192" },
-                new { src = "/Modules/Total/content/Icon-512.png", type = "image/png", sizes = "512x512" }
+                new Icon { Src = "/Modules/Total/content/Icon-192.png", Type = "image/png", Sizes = "192x192" },
+                new Icon { Src = "/Modules/Total/content/Icon-512.png", Type = "image/png", Sizes = "512x512" }
             },
-            screenshots = new[]
+            Screenshots = new[]
             {
-                new {
-                    src = "/Modules/Total/content/screenshot-vertical.png",
-                    type = "image/png",
-                    sizes = "1080x1920",
-                    platform = "any",
-                    orientation = "portrait"
+                new Screenshot
+                {
+                    Src = "/Modules/Total/content/screenshot-vertical.png",
+                    Type = "image/png",
+                    Sizes = "1080x1920",
+                    Platform = "any",
+                    Orientation = "portrait"
                 },
-                new {
-                    src = "/Modules/Total/content/screenshot-horizontal.png",
-                    type = "image/png",
-                    sizes = "1920x1080",
-                    platform = "any",
-                    orientation = "landscape"
+                new Screenshot
+                {
+                    Src = "/Modules/Total/content/screenshot-horizontal.png",
+                    Type = "image/png",
+                    Sizes = "1920x1080",
+                    Platform = "any",
+                    Orientation = "landscape"
                 }
             }
-        }, _jsonOptions);
+        };
 
+        using var fs = new FileStream(filePath, FileMode.Create, FileAccess.Write, FileShare.None);
+
+        JsonSerializer.Serialize(fs, manifest, JsonContext.Default.ManifestModel);
     }
 }

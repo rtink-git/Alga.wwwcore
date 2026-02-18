@@ -5,7 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>Alga.wwwcore</PackageId>
-    <Version>5.0.0</Version>
+    <Version>5.0.1</Version>
     <Author>rtink.git@gmail.com</Author>
     <Product>wwwcore</Product>
     <PackageReadmeFile>README.md</PackageReadmeFile>
