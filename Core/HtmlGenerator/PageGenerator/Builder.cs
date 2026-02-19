@@ -12,7 +12,7 @@ class Builder
     {
         WriteString("<!DOCTYPE html><html><head>");
         WriteString(req.BaseMetaSb.ToString());
-        if (req.SeoMetaReq != null) new SeoMetaGenerator.Builder().Do(req.SeoMetaReq, writer);
+        if (req.SeoMetaReq != null) new SeoMetaGenerator.Builder().Write(req.SeoMetaReq, writer);
 
         if (req.IsDebug && req.PagesModules != null && req.PageScheme.modules != null)
             foreach (var moduleName in req.PageScheme.modules)

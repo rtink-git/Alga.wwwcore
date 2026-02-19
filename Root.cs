@@ -1,4 +1,5 @@
-﻿using System.IO.Pipelines;
+﻿using System.Runtime.CompilerServices;
+using System.IO.Pipelines;
 
 namespace Alga.wwwcore;
 
@@ -7,6 +8,7 @@ public sealed class Root
     public ClientSettings ClientSettings;
 
     Core.IInitializer _coreInitializer { get; }
+    Core.UseCases.WriteHtml? _htmlWriter;
 
     public Root(ClientSettings clientSettings, bool isDebug)
     {
@@ -19,5 +21,10 @@ public sealed class Root
         _coreInitializer = new Core.Initializer(clientSettings, isDebug);
     }
 
-    public void WriteHtml(PipeWriter writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null) => new Core.UseCases.WriteHtml(_coreInitializer).Do(writer, UISName, seoPageOptions, pageModelAsJson);
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public void WriteHtml(PipeWriter writer, string UISName, SeoPageOptions seoPageOptions, string? pageModelAsJson = null)
+    {
+        var writerImpl = _htmlWriter ??= new Core.UseCases.WriteHtml(_coreInitializer);
+        writerImpl.Do(writer, UISName, seoPageOptions, pageModelAsJson);
+    }
 }

@@ -4,14 +4,28 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
     <PackageId>Alga.wwwcore</PackageId>
-    <Version>5.0.1</Version>
+    <Version>5.0.11</Version>
     <Author>rtink.git@gmail.com</Author>
     <Product>wwwcore</Product>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/rtink-git/Alga.wwwcore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
+
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <StripSymbols>true</StripSymbols>
+    <OptimizationPreference>Speed</OptimizationPreference>
+
+    <TrimMode>full</TrimMode>
+    <IsTrimmable>true</IsTrimmable>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+
+    <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>false</DebugSymbols>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,13 +36,6 @@
 
   <ItemGroup>
     <PackageReference Include="NUglify" Version="1.21.17" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Core/HtmlGenerator/BaseMetaGenerator/" />
-    <Folder Include="Core/HtmlGenerator/PageCssFile/" />
-    <Folder Include="Core/HtmlGenerator/PageJsFile/" />
-    <Folder Include="Core/UseCases/" />
   </ItemGroup>
 
 </Project>

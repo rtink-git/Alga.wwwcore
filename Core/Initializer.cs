@@ -31,9 +31,7 @@ public class Initializer : IInitializer
         if (!Directory.Exists(directoryPath)) throw new DirectoryNotFoundException($"Required wwwroot directory not found at: {directoryPath}");
 
         var reqBaseMetaGenerator = new HtmlGenerator.BaseMetaGenerator.Req() { IsDebug = IsDebug, Version = version, BingSiteVerification = _clientOptions.BingSiteVerification, GoogleAnalyticsCode = _clientOptions.GoogleAnalyticsCode, GoogleFontsUrl = _clientOptions.GoogleFontsUrl, GoogleSiteVerification = _clientOptions.GoogleSiteVerification, PreconnectUrls = _clientOptions.PreconnectUrls, ThemeColor = _clientOptions.ThemeColor, UseMessagePack = _clientOptions.UseMessagePack, UseTelegram = _clientOptions.UseTelegram, YandexMetrikaCode = _clientOptions.YandexMetrikaCode, YandexVerificationCode = _clientOptions.YandexVerificationCode };
-        var baseMetaGeneratorDone = new HtmlGenerator.BaseMetaGenerator.Builder().Do(reqBaseMetaGenerator);
-
-        BaseMetaHeadHtml = baseMetaGeneratorDone;
+        BaseMetaHeadHtml = new HtmlGenerator.BaseMetaGenerator.Builder().Do(reqBaseMetaGenerator);
 
         var reqSchemesGenerator = new SchemesGenerator.Req() { IsDebug = IsDebug, Version = version, DirectoryPath = directoryPath };
         var schemesGeneratorDone = new SchemesGenerator.Builder().Do(reqSchemesGenerator);

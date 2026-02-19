@@ -1,163 +1,183 @@
-using System.IO.Pipelines;
-using System.Text;
-using System.Runtime.CompilerServices;
 using System.Globalization;
+using System.IO.Pipelines;
+using System.Runtime.CompilerServices;
+using System.Text;
+using System.Buffers;
 
 namespace Alga.wwwcore.Core.HtmlGenerator.SeoMetaGenerator;
 
 sealed class Builder
 {
-    static readonly Encoding Utf8 = Encoding.UTF8;
-    static readonly CultureInfo Invariant = CultureInfo.InvariantCulture;
+    static readonly CultureInfo Inv = CultureInfo.InvariantCulture;
+    static readonly Encoding Utf8Enc = Encoding.UTF8;
+    static ReadOnlySpan<byte> MetaName => "<meta name=\""u8;
+    static ReadOnlySpan<byte> MetaProp => "<meta property=\""u8;
+    static ReadOnlySpan<byte> MetaContent => "\" content=\""u8;
+    static ReadOnlySpan<byte> MetaClose => "\">"u8;
+    static ReadOnlySpan<byte> LinkCanonical => "<link rel=\"canonical\" href=\""u8;
+    static ReadOnlySpan<byte> TitleOpen => "<title>"u8;
+    static ReadOnlySpan<byte> TitleClose => "</title>"u8;
+    static ReadOnlySpan<byte> OgUrl => "<meta property=\"og:url\" content=\""u8;
+    static ReadOnlySpan<byte> TwitterCard => "<meta name=\"twitter:card\" content=\"summary_large_image\">"u8;
+    static ReadOnlySpan<byte> JsonLdOpen => "<script type=\"application/ld+json\">"u8;
+    static ReadOnlySpan<byte> JsonLdClose => "</script>"u8;
 
-    static readonly byte[] MetaNamePrefix = Encoding.UTF8.GetBytes("<meta name=\"");
-
-    public void Do(Req req, PipeWriter writer)
+    [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
+    public void Write(Req req, PipeWriter writer)
     {
         var spo = req.SeoPageOptions;
-
-        // robots
-
-        WriteMeta("robots", spo.Robot);
-
-        // canonical
-
-        if (spo.UrlCanonical != null)
-        {
-            WriteString("<link rel=\"canonical\" href=\"");
-            WriteString(req.Url);
-            WriteString(spo.UrlCanonical);
-            WriteString("\" />");
-        }
-
         if (string.IsNullOrEmpty(spo.Title)) return;
 
-        WriteString("<title>");
-        WriteString(spo.Title);
-        WriteString("</title>");
+        var w = new Utf8BufferWriter(writer);
 
-        WriteMeta("description", spo.Description);
+        // robots
+        WriteMetaNameContent(ref w, "robots"u8, spo.Robot);
 
-        // The Open Graph protocol. https://ogp.me
+        // canonical
+        if (spo.UrlCanonical != null)
+        {
+            w.Write(LinkCanonical);
+            w.Write(req.Url);
+            w.Write(spo.UrlCanonical);
+            w.WriteByte((byte)'"');
+            w.WriteByte((byte)'>');
+        }
 
-        WriteOG("og:type", spo.TypeOg);
-        if (!string.IsNullOrEmpty(req.Url) || !string.IsNullOrEmpty(spo.Path)) WriteOGUrl(req.Url, spo.Path);
-        WriteOG("og:title", spo.Title);
-        WriteOG("og:description", spo.Description);
-        WriteOG("og:site_name", req.NameShort);
-        WriteOG("og:locale", spo.Lang);
-        if (spo.ItemPrice.HasValue) WriteOG("product:price:amount", spo.ItemPrice.Value.ToString(Invariant));
-        WriteOG("product:price:currency", spo.ItemCurrency);
-        WriteOG("product:availability", spo.ItemAvailability);
+        // title
+        w.Write(TitleOpen);
+        w.Write(spo.Title);
+        w.Write(TitleClose);
 
-        WriteOG("og:image", spo.ImageUrl);
-        WriteOG("og:image:type", spo.ImageEncodingFormat);
-        WriteOG("og:image:alt", spo.Title);
+        // description
+        WriteMetaNameContent(ref w, "description"u8, spo.Description);
+
+        // Open Graph
+
+        WriteMetaPropContent(ref w, "og:type"u8, spo.TypeOg);
+        WriteOgUrl(ref w, req.Url, spo.Path);
+        WriteMetaPropContent(ref w, "og:title"u8, spo.Title);
+        WriteMetaPropContent(ref w, "og:description"u8, spo.Description);
+        WriteMetaPropContent(ref w, "og:site_name"u8, req.NameShort);
+        WriteMetaPropContent(ref w, "og:locale"u8, spo.Lang);
+
+        if (spo.ItemPrice.HasValue)
+            WriteMetaPropContent(ref w, "product:price:amount"u8, spo.ItemPrice.Value.ToString(Inv));
+
+        WriteMetaPropContent(ref w, "product:price:currency"u8, spo.ItemCurrency);
+        WriteMetaPropContent(ref w, "product:availability"u8, spo.ItemAvailability);
+
+        WriteMetaPropContent(ref w, "og:image"u8, spo.ImageUrl);
+        WriteMetaPropContent(ref w, "og:image:type"u8, spo.ImageEncodingFormat);
+        WriteMetaPropContent(ref w, "og:image:alt"u8, spo.Title);
+
         if (spo.ImageWidth > 0 && spo.ImageHeight > 0)
         {
-            WriteOG("og:image:width", spo.ImageWidth.ToString());
-            WriteOG("og:image:height", spo.ImageHeight.ToString());
+            WriteMetaPropContent(ref w, "og:image:width"u8, spo.ImageWidth.ToString());
+            WriteMetaPropContent(ref w, "og:image:height"u8, spo.ImageHeight.ToString());
         }
 
         // Twitter
-
         if (!string.IsNullOrEmpty(req.TwitterSite))
         {
-            WriteMeta("twitter:card", "summary_large_image");
-            WriteMetaUrl("twitter:url", req.Url, spo.Path);
-            WriteMeta("twitter:title", spo.Title);
-            WriteMeta("twitter:description", spo.Description);
-            WriteMeta("twitter:site", req.TwitterSite);
-            WriteMeta("twitter:image", spo.ImageUrl);
-            WriteMeta("twitter:image:alt", spo.Title);
+            w.Write(TwitterCard);
+            WriteMetaNameUrl(ref w, "twitter:url"u8, req.Url, spo.Path);
+            WriteMetaNameContent(ref w, "twitter:title"u8, spo.Title);
+            WriteMetaNameContent(ref w, "twitter:description"u8, spo.Description);
+            WriteMetaNameContent(ref w, "twitter:site"u8, req.TwitterSite);
+            WriteMetaNameContent(ref w, "twitter:image"u8, spo.ImageUrl);
+            WriteMetaNameContent(ref w, "twitter:image:alt"u8, spo.Title);
         }
 
-        // --- JSON-LD ---
-
-        if (spo.SchemaOrgsJson?.Length > 32)
+        // JSON-LD
+        var json = spo.SchemaOrgsJson;
+        if (!string.IsNullOrEmpty(json) && json.Length > 32)
         {
-            WriteString("<script type=\"application/ld+json\">");
-            WriteString(spo.SchemaOrgsJson);
-            WriteString("</script>");
+            w.Write(JsonLdOpen);
+            w.Write(json);
+            w.Write(JsonLdClose);
+        }
+
+        // Можно не вызывать FlushAsync здесь, если вызывающий код сам управляет
+        // w.Commit();
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static void WriteMetaNameContent(ref Utf8BufferWriter w, ReadOnlySpan<byte> name, string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        w.Write(MetaName);
+        w.Write(name);
+        w.Write(MetaContent);
+        w.Write(value);
+        w.Write(MetaClose);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteMetaNameUrl(ref Utf8BufferWriter w, ReadOnlySpan<byte> name, string? baseUrl, string? path)
+    {
+        if (string.IsNullOrEmpty(baseUrl) && string.IsNullOrEmpty(path)) return;
+        w.Write(MetaName);
+        w.Write(name);
+        w.Write(MetaContent);
+        if (baseUrl != null) w.Write(baseUrl);
+        if (path != null) w.Write(path);
+        w.Write(MetaClose);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteMetaPropContent(ref Utf8BufferWriter w, ReadOnlySpan<byte> prop, string? value)
+    {
+        if (string.IsNullOrEmpty(value)) return;
+        w.Write(MetaProp);
+        w.Write(prop);
+        w.Write(MetaContent);
+        w.Write(value);
+        w.Write(MetaClose);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static void WriteOgUrl(ref Utf8BufferWriter w, string? baseUrl, string? path)
+    {
+        if (string.IsNullOrEmpty(baseUrl) && string.IsNullOrEmpty(path)) return;
+        w.Write(OgUrl);
+        if (baseUrl != null) w.Write(baseUrl);
+        if (path != null) w.Write(path);
+        w.Write(MetaClose);
+    }
+
+    readonly ref struct Utf8BufferWriter
+    {
+        private readonly PipeWriter _writer;
+
+        public Utf8BufferWriter(PipeWriter writer) => _writer = writer;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Write(ReadOnlySpan<byte> data)
+        {
+            var span = _writer.GetSpan(data.Length);
+            data.CopyTo(span);
+            _writer.Advance(data.Length);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteMeta(string name, string? content)
+        public void Write(string? s)
         {
-            if (string.IsNullOrEmpty(content)) return;
+            if (s == null) return;
 
-            WriteString("<meta name=\"");
-            WriteString(name);
-            WriteString("\" content=\"");
-            WriteString(content);
-            WriteString("\">");
+            var byteCount = Utf8Enc.GetByteCount(s);
+            var span = _writer.GetSpan(byteCount);
+            Utf8Enc.GetBytes(s, span);
+            _writer.Advance(byteCount);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteOG(string property, string? content)
+        public void WriteByte(byte b)
         {
-            if (string.IsNullOrEmpty(content)) return;
-
-            WriteString("<meta property=\"");
-            WriteString(property);
-            WriteString("\" content=\"");
-            WriteString(content);
-            WriteString("\">");
+            var span = _writer.GetSpan(1);
+            span[0] = b;
+            _writer.Advance(1);
         }
 
-        // og:url = baseUrl + path (без строки-склейки)
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteOGUrl(string? baseUrl, string? path)
-        {
-            if (string.IsNullOrEmpty(baseUrl) && string.IsNullOrEmpty(path))
-                return;
-
-            WriteString("<meta property=\"og:url\" content=\"");
-
-            if (!string.IsNullOrEmpty(baseUrl))
-                WriteString(baseUrl);
-
-            if (!string.IsNullOrEmpty(path))
-                WriteString(path);
-
-            WriteString("\">");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteMetaUrl(string name, string? baseUrl, string? path)
-        {
-            if (string.IsNullOrEmpty(baseUrl) && string.IsNullOrEmpty(path))
-                return;
-
-            WriteString("<meta name=\"");
-            WriteString(name);
-            WriteString("\" content=\"");
-
-            if (!string.IsNullOrEmpty(baseUrl))
-                WriteString(baseUrl);
-
-            if (!string.IsNullOrEmpty(path))
-                WriteString(path);
-
-            WriteString("\">");
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteString(string s)
-        {
-            int byteCount = Utf8.GetByteCount(s);
-            Span<byte> span = writer.GetSpan(byteCount);
-            int written = Utf8.GetBytes(s, span);
-            writer.Advance(written);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        void WriteSpan(ReadOnlySpan<char> s)
-        {
-            int byteCount = Utf8.GetByteCount(s);
-            Span<byte> span = writer.GetSpan(byteCount);
-            int written = Utf8.GetBytes(s, span);
-            writer.Advance(written);
-        }
+        // public void Commit() => _writer.FlushAsync();  // раскомментируй, если нужно
     }
 }
