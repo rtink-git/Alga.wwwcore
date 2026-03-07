@@ -14,7 +14,7 @@
     <RepositoryUrl>https://github.com/rtink-git/Alga.wwwcore</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
 
-    <PublishAot>true</PublishAot>
+    <!-- <PublishAot>true</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
     <StripSymbols>true</StripSymbols>
     <OptimizationPreference>Speed</OptimizationPreference>
@@ -25,7 +25,7 @@
 
     <EnableCompressionInSingleFile>true</EnableCompressionInSingleFile>
     <DebugType>embedded</DebugType>
-    <DebugSymbols>false</DebugSymbols>
+    <DebugSymbols>false</DebugSymbols> -->
   </PropertyGroup>
 
   <ItemGroup>

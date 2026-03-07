@@ -24,11 +24,8 @@ public class Builder
         {
             sb.Append(PreconnectLink("https://fonts.googleapis.com"));
             sb.Append(PreconnectLink("https://fonts.gstatic.com", true));
-            sb.Append($"""<link rel="stylesheet" href="{req.GoogleFontsUrl}&font-display=swap" as="style" onload="this.rel='stylesheet'" crossorigin="anonymous">""");
+            sb.Append($"""<link rel="stylesheet" href="{req.GoogleFontsUrl}&font-display=swap">""");
         }
-
-        sb.Append(IconLinkHtml(32, "icon"));
-        sb.Append(IconLinkHtml(180, "apple-touch-icon"));
 
         if (req.UseMessagePack) sb.Append("<script src=\"https://cdn.jsdelivr.net/npm/@msgpack/msgpack@2.8.0/dist.es5+umd/msgpack.min.js\"></script>");
 
@@ -47,9 +44,6 @@ public class Builder
 
     // Create <link rel="preconnect">
     static string PreconnectLink(string url, bool isCrossorigin = false) => "<link rel=\"preconnect\" href=\"" + url + "\" " + (isCrossorigin ? "crossorigin" : "") + ">";
-
-    // Create <link rel="icon"> tag
-    static string IconLinkHtml(int size, string rel = "icon") => $"<link rel=\"{rel}\" href=\"/Modules/Total/content/Icon-{size}.png\" sizes=\"{size}x{size}\" type=\"image/png\">";
 
     // Generates Google Analytics (gtag.js) tracking script for HTML pages
     static string GoogleAnalitysScript(string googleAnalyticsCode) =>

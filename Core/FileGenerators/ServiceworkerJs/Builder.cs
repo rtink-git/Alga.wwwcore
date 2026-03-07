@@ -38,11 +38,13 @@ const TIMESTAMP_SKIP_RE = /\.([0-9]{12})\.min\.(js|css|woff2?)$/i;
 const MEDIA_SKIP_RE = /\.(?:png|jpe?g|gif|webp|svg)$/i;
 const MANIFEST_SKIP_RE = /\/manifest\.[a-zA-Z0-9]+\.json$/i;
 
+let cachePromise = null;
 
 self.addEventListener('install', (event) => {{
   event.waitUntil(
     caches.open(CACHE_NAME) // Open the cache
       .then((cache) => {{
+        cachePromise = Promise.resolve(cache);
         self.skipWaiting(); // Instant activation
 
         // For each URL create a chain cache.add(url).catch…
@@ -57,6 +59,7 @@ self.addEventListener('install', (event) => {{
         );
 
         // Use Promise.allSettled instead of Promise.all
+
         return Promise.allSettled(addOps).then(results => {{
           const successful = results.filter(r => r.status === 'fulfilled').length;
           const failed = results.filter(r => r.status === 'rejected').length;
@@ -97,9 +100,12 @@ self.addEventListener('activate', (event) => {{
 }});
 
 self.addEventListener('fetch', (event) => {{
-    if (event.request.method !== 'GET') return;
-
     const req = event.request;
+
+    if (req.mode === 'navigate') return;
+
+    if (req.method !== 'GET') return;
+
     const url = new URL(req.url); 
     if (TIMESTAMP_SKIP_RE.test(url.pathname) || MEDIA_SKIP_RE.test(url.pathname) || MANIFEST_SKIP_RE.test(url.pathname)) {{
         event.respondWith(fetch(req));
@@ -107,21 +113,8 @@ self.addEventListener('fetch', (event) => {{
     }}
 
     event.respondWith((async () => {{
-      /* --- 1. NAVIGATION PRELOAD ---------------------------------- */
-      if (req.mode === 'navigate' && self.registration.navigationPreload) {{
-        try {{
-          const preloadResp = await event.preloadResponse;  // может reject‑нуться
-          if (preloadResp) {{
-            return preloadResp;       // сеть уже дала HTML, offline не нужен
-          }}
-        }} catch (err) {{
-          console.warn('[ServiceWorker] Navigation‑preload error:', err);
-        }}
-      }}
-      /* ------------------------------------------------------------ */
-
         const isStatic = staticExtensions.some(ext => url.pathname.endsWith(ext));
-        const cache = await caches.open(CACHE_NAME);
+        const cache = await cachePromise || await caches.open(CACHE_NAME);
 
         if (isStatic) {{
             const cached = await cache.match(req);
@@ -167,6 +160,45 @@ self.addEventListener('fetch', (event) => {{
     File.WriteAllText(serviceWorkerPath, code);
   }
 }
+
+// sealed class Builder
+// {
+//   public void Do(Req req)
+//   {
+//     string serviceWorkerPath = Path.Combine(req.DirectoryPath, $"serviceworker.{req.Version}.js");
+
+//     var filesToDelete = Directory.GetFiles(req.DirectoryPath, "*.js", SearchOption.TopDirectoryOnly).Where(f => Path.GetFileName(f).Contains("serviceworker"));
+//     foreach (var file in filesToDelete)
+//       File.Delete(file);
+
+//     var toCacheList = new HashSet<string>();
+
+//     if (req.Schemes != null)
+//       foreach (var i in req.Schemes)
+//       {
+//         if (i.Value.script != null) toCacheList.Add(i.Value.script);
+//         if (i.Value.style != null) toCacheList.Add(i.Value.style);
+//       }
+
+//     if (req?.CacheUrls != null)
+//       foreach (var i in req.CacheUrls)
+//         toCacheList.Add(i);
+
+//     if (!string.IsNullOrEmpty(req.OfflinePageUrl)) toCacheList.Add(req.OfflinePageUrl);
+
+//     var array = string.Join(",", new[] { "'" + "/" + "'" }.Concat(toCacheList.Select(i => $"'{i}'")));
+
+//     var cacheName = $"SWStaticCache-{req.Version}";
+
+//     string code = $@"
+// self.addEventListener('fetch', event => {{
+//   // ничего не делаем → браузер просто пропустит запрос дальше
+// }});
+// ";
+//     File.WriteAllText(serviceWorkerPath, code);
+//   }
+// }
+
 
 // class ServiceworkerJs
 // {

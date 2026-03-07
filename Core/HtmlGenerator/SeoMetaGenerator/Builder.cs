@@ -2,7 +2,7 @@ using System.Globalization;
 using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
 using System.Text;
-using System.Buffers;
+using System.Buffers.Text;
 
 namespace Alga.wwwcore.Core.HtmlGenerator.SeoMetaGenerator;
 
@@ -21,6 +21,12 @@ sealed class Builder
     static ReadOnlySpan<byte> TwitterCard => "<meta name=\"twitter:card\" content=\"summary_large_image\">"u8;
     static ReadOnlySpan<byte> JsonLdOpen => "<script type=\"application/ld+json\">"u8;
     static ReadOnlySpan<byte> JsonLdClose => "</script>"u8;
+    static ReadOnlySpan<byte> LinkRelOpen => "<link rel=\""u8;
+    static ReadOnlySpan<byte> LinkHref => "\" href=\""u8;
+    static ReadOnlySpan<byte> LinkSizes => "\" sizes=\""u8;
+    static ReadOnlySpan<byte> LinkTypeOpen => "\" type=\""u8;
+    static ReadOnlySpan<byte> TagClose => "\">"u8;
+    static ReadOnlySpan<byte> X => "x"u8;
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     public void Write(Req req, PipeWriter writer)
@@ -37,7 +43,6 @@ sealed class Builder
         if (spo.UrlCanonical != null)
         {
             w.Write(LinkCanonical);
-            w.Write(req.Url);
             w.Write(spo.UrlCanonical);
             w.WriteByte((byte)'"');
             w.WriteByte((byte)'>');
@@ -50,6 +55,10 @@ sealed class Builder
 
         // description
         WriteMetaNameContent(ref w, "description"u8, spo.Description);
+
+        // icons
+        WriteIcon(ref w, 32, spo.Icon32?.Url, spo.Icon32?.EncodingFormat, "icon"u8);
+        WriteIcon(ref w, 180, spo.Icon180?.Url, spo.Icon180?.EncodingFormat, "apple-touch-icon"u8);
 
         // Open Graph
 
@@ -66,14 +75,14 @@ sealed class Builder
         WriteMetaPropContent(ref w, "product:price:currency"u8, spo.ItemCurrency);
         WriteMetaPropContent(ref w, "product:availability"u8, spo.ItemAvailability);
 
-        WriteMetaPropContent(ref w, "og:image"u8, spo.ImageUrl);
-        WriteMetaPropContent(ref w, "og:image:type"u8, spo.ImageEncodingFormat);
+        WriteMetaPropContent(ref w, "og:image"u8, spo.Image?.Url);
+        WriteMetaPropContent(ref w, "og:image:type"u8, spo.Image?.EncodingFormat);
         WriteMetaPropContent(ref w, "og:image:alt"u8, spo.Title);
 
-        if (spo.ImageWidth > 0 && spo.ImageHeight > 0)
+        if (spo.Image?.Width > 0 && spo.Image?.Height > 0)
         {
-            WriteMetaPropContent(ref w, "og:image:width"u8, spo.ImageWidth.ToString());
-            WriteMetaPropContent(ref w, "og:image:height"u8, spo.ImageHeight.ToString());
+            WriteMetaPropContent(ref w, "og:image:width"u8, spo.Image?.Width.ToString());
+            WriteMetaPropContent(ref w, "og:image:height"u8, spo.Image?.Height.ToString());
         }
 
         // Twitter
@@ -84,7 +93,7 @@ sealed class Builder
             WriteMetaNameContent(ref w, "twitter:title"u8, spo.Title);
             WriteMetaNameContent(ref w, "twitter:description"u8, spo.Description);
             WriteMetaNameContent(ref w, "twitter:site"u8, req.TwitterSite);
-            WriteMetaNameContent(ref w, "twitter:image"u8, spo.ImageUrl);
+            WriteMetaNameContent(ref w, "twitter:image"u8, spo.Image?.Url);
             WriteMetaNameContent(ref w, "twitter:image:alt"u8, spo.Title);
         }
 
@@ -99,6 +108,43 @@ sealed class Builder
 
         // Можно не вызывать FlushAsync здесь, если вызывающий код сам управляет
         // w.Commit();
+    }
+
+    // Create <link rel="icon"> tag
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static void WriteIcon(
+        ref Utf8BufferWriter w,
+        int size,
+        string? url,
+        string? encodingFormat,
+        ReadOnlySpan<byte> rel)
+    {
+        if (string.IsNullOrEmpty(url) || string.IsNullOrEmpty(encodingFormat))
+            return;
+
+        w.Write(LinkRelOpen);
+        w.Write(rel);
+
+        w.Write(LinkHref);
+        w.Write(url);
+
+        w.Write(LinkSizes);
+        WriteInt(ref w, size);
+        w.Write(X);
+        WriteInt(ref w, size);
+
+        w.Write(LinkTypeOpen);
+        w.Write(encodingFormat);
+
+        w.Write(TagClose);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    static void WriteInt(ref Utf8BufferWriter w, int value)
+    {
+        Span<byte> buffer = stackalloc byte[11];
+        if (Utf8Formatter.TryFormat(value, buffer, out var written))
+            w.Write(buffer[..written]);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
