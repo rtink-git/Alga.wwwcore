@@ -83,14 +83,6 @@ self.addEventListener('activate', (event) => {{
           .map(name  => caches.delete(name))
       );
 
-      /* —‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ */
-      // 1. Проверяем поддержку
-      if (self.registration.navigationPreload) {{
-        // 2. Включаем Navigation Preload для всех будущих navigate‑запросов
-        await self.registration.navigationPreload.enable();
-      }}
-      /* —‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑‑ */
-
       await self.clients.claim();
       //console.log('[ServiceWorker] Активация завершена.');
     }} catch (e) {{
